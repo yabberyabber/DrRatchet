@@ -6,6 +6,7 @@
 (define SQRS 3)
 (define MT-SCN (empty-scene WIDTH HEIGHT))
 (define SQR-SIZE (/ WIDTH 10))
+(define X-PAD (/ WIDTH (* 2 SQRS)))
 
 
 ; number -> number
@@ -13,14 +14,15 @@
 (define (y-offset n)
   (- (* n (/ WIDTH SQRS)) (/ WIDTH (* 2 SQRS))))
 
-(check-expect (y-offset 5) (- (* 5 (/ 400 3)) 15))
+(check-expect (y-offset 5) (- (* 5 (/ 400 3)) (/ WIDTH 6)))
 
 ; number -> number
 ; set the x offset value for each square
 (define (x-offset n)
- (* n (/ HEIGHT SQRS)))
+ (- (* n (/ HEIGHT SQRS)) X-PAD))
 
-(check-expect (x-offset 2) (* 2 (/ 400 3)))
+(check-expect (x-offset 2) (- (* 2 (/ 400 3)) X-PAD))
+
 
 ; a sq-part is (make-sq-part number posn)
 (define-struct sq-part (len posn))
@@ -50,10 +52,15 @@
                            MT-SCN))
 
 
-;
 
 ;big bang
 (big-bang (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)))
                   (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)))
-                        (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3))) empty)))
+                        (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)))
+                              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)))
+                                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 2)))
+                                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 3)))
+                                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 1)))
+                                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 2)))
+                                                            (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 3))) empty)))))))))
             [to-draw sqr-placer])
