@@ -129,7 +129,6 @@
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))))
 
-; any any -> any
 (define (both a b)
   b)
 
