@@ -38,7 +38,7 @@
     [(empty? lod) MT-SCN]
     [else (place-image (square
                               (sq-part-len (first lod))
-                              "solid"
+                              (if (sq-part-state (first lod)) "solid" "outline")
                               "red")
                              (posn-x (sq-part-posn (first lod)))
                              (posn-y (sq-part-posn (first lod)))
