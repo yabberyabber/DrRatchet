@@ -24,8 +24,8 @@
 (check-expect (x-offset 2) (- (* 2 (/ 400 3)) X-PAD))
 
 
-; a sq-part is (make-sq-part number posn)
-(define-struct sq-part (len posn))
+; a sq-part is (make-sq-part number posn boolean)
+(define-struct sq-part (len posn state))
 
 
 ; a list-of-dims is one of:
@@ -45,7 +45,8 @@
                              (sqr-placer (rest lod)))]))
 
 (check-expect (sqr-placer (cons (make-sq-part 5
-                                              (make-posn 10 20))
+                                              (make-posn 10 20)
+                                              true)
                                 empty))
               (place-image (square 5 "solid" "red")
                            10 20
@@ -54,13 +55,13 @@
 
 
 ;big bang
-(big-bang (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)))
-                  (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)))
-                        (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)))
-                              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)))
-                                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 2)))
-                                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 3)))
-                                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 1)))
-                                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 2)))
-                                                            (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 3))) empty)))))))))
+(big-bang (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
+                  (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
+                        (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
+                              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
+                                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 2)) false)
+                                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 3)) false)
+                                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 1)) false)
+                                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 2)) false)
+                                                            (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 3)) false) empty)))))))))
             [to-draw sqr-placer])
