@@ -1,9 +1,11 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
 #reader(lib "htdp-intermediate-reader.ss" "lang")((modname |Final Project|) (read-case-sensitive #t) (teachpacks ((lib "image.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp"))) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ((lib "image.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp")))))
+(require rsound)
+
 (define WIDTH 400)
 (define HEIGHT 400)
-(define SQRS 3)
+(define SQRS 8)
 (define MT-SCN (empty-scene WIDTH HEIGHT))
 (define SQR-SIZE (/ WIDTH 10))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
@@ -15,6 +17,12 @@
   (- (* n (/ WIDTH SQRS)) (/ WIDTH (* 2 SQRS))))
 
 (check-expect (y-offset 5) (- (* 5 (/ 400 3)) (/ WIDTH 6)))
+
+; dummy functions
+(define (y-pt->y-gd y)
+  (ceiling (* (/ y HEIGHT) SQRS)))
+(define (x-pt->x-gd x)
+  (ceiling (* (/ x WIDTH) SQRS)))
 
 ; number -> number
 ; set the x offset value for each square
@@ -52,16 +60,41 @@
                            10 20
                            MT-SCN))
 
+; create-row takes an x and y and returns a list of squares all with y-posn y and with x-posns ranging from 1 to x
+; number number -> list-of-squares
+(define (create-row x y)
+  (cond [(equal? x 0) empty]
+        [else (cons (make-sq-part SQR-SIZE (make-posn (x-offset x) (y-offset y)) false) (create-row (- x 1) y))]))
 
+; grid takes an x and y and returns a list of squares with y-posns ranging from 1 to y and x-posns ranging from 1 to x
+; number number -> list-of-squares
+(define (create-grid x y LOB)
+  (cond [(equal? y 0) LOB]
+        [else (create-grid x (- y 1) 
+                           (append LOB 
+                                   (create-row x y)))]))
+; toggle-square takes an x and a y and a list-of-squares and returns the list of squares with
+; the square at position x and y with the state flipped
+; number number list-of-square -> list-of-squares
+(define (toggle-square x y LOS)
+  (cond [(empty? LOS) empty]
+        [else
+         (cond [(and (equal? (x-offset x) (posn-x (sq-part-posn (first LOS))))
+                     (equal? (y-offset y) (posn-y (sq-part-posn (first LOS)))))
+                (cons (make-sq-part SQR-SIZE (sq-part-posn (first LOS)) (not (sq-part-state (first LOS)))) (toggle-square x y (rest LOS)))]
+               [else (cons (first LOS) (toggle-square x y (rest LOS)))])]))
+
+(define (both a b )
+  b)
+
+; mouse handler handles mouse events.  Depending on where the user clicked, toggles a square.
+(define (me-h LOS x y event)
+  (cond [(equal? event "button-down") 
+         (both (play c-hi-hat-1)
+               (toggle-square (x-pt->x-gd x) (y-pt->y-gd y) LOS))]
+        [else LOS]))
 
 ;big bang
-(big-bang (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
-                  (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                        (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
-                              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
-                                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 2)) false)
-                                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 3)) false)
-                                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 1)) false)
-                                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 2)) false)
-                                                            (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 3)) false) empty)))))))))
-            [to-draw sqr-placer])
+(big-bang (create-grid SQRS SQRS empty)
+            [to-draw sqr-placer]
+            [on-mouse me-h])
