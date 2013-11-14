@@ -31,16 +31,38 @@
 ; number -> number
 ; separate scene into horizontal sections
 (define (y-pt->y-gd y)
-  (ceiling (* (/ y HEIGHT) SQRS)))
+  (cond
+    [(< 0 y (- (y-offset 1) (/ SQR-SIZE 2))) -1]
+    [(< (+ (y-offset 1) (/ SQR-SIZE 2)) y (- (y-offset 2) (/ SQR-SIZE 2))) -1]
+    [(< (+ (y-offset 2) (/ SQR-SIZE 2)) y (- (y-offset 3) (/ SQR-SIZE 2))) -1]
+    [(< (+ (y-offset 3) (/ SQR-SIZE 2)) y (- (y-offset 4) (/ SQR-SIZE 2))) -1]
+    [(< (+ (y-offset 4) (/ SQR-SIZE 2)) y (- (y-offset 5) (/ SQR-SIZE 2))) -1]
+    [(< (+ (y-offset 5) (/ SQR-SIZE 2)) y (- (y-offset 6) (/ SQR-SIZE 2))) -1]
+    [(< (+ (y-offset 6) (/ SQR-SIZE 2)) y (- (y-offset 7) (/ SQR-SIZE 2))) -1]
+    [(< (+ (y-offset 7) (/ SQR-SIZE 2)) y (- (y-offset 8) (/ SQR-SIZE 2))) -1]
+    [(< (+ (y-offset 8) (/ SQR-SIZE 2)) y HEIGHT) -1]
+    [else (ceiling (* (/ y HEIGHT) SQRS))]))
 
 (check-expect (y-pt->y-gd 31) 1)
+(check-expect (y-pt->y-gd 46) -1)
 
 ; number -> number
 ; separate scene into vertical sections
 (define (x-pt->x-gd x)
-  (ceiling (* (/ x WIDTH) SQRS)))
+  (cond
+    [(< 0 x (- (x-offset 1) (/ SQR-SIZE 2))) -1]
+    [(< (+ (x-offset 1) (/ SQR-SIZE 2)) x (- (x-offset 2) (/ SQR-SIZE 2))) -1]
+    [(< (+ (x-offset 2) (/ SQR-SIZE 2)) x (- (x-offset 3) (/ SQR-SIZE 2))) -1]
+    [(< (+ (x-offset 3) (/ SQR-SIZE 2)) x (- (x-offset 4) (/ SQR-SIZE 2))) -1]
+    [(< (+ (x-offset 4) (/ SQR-SIZE 2)) x (- (x-offset 5) (/ SQR-SIZE 2))) -1]
+    [(< (+ (x-offset 5) (/ SQR-SIZE 2)) x (- (x-offset 6) (/ SQR-SIZE 2))) -1]
+    [(< (+ (x-offset 6) (/ SQR-SIZE 2)) x (- (x-offset 7) (/ SQR-SIZE 2))) -1]
+    [(< (+ (x-offset 7) (/ SQR-SIZE 2)) x (- (x-offset 8) (/ SQR-SIZE 2))) -1]
+    [(< (+ (x-offset 8) (/ SQR-SIZE 2)) x WIDTH) -1]
+    [else (ceiling (* (/ x WIDTH) SQRS))]))
 
 (check-expect (x-pt->x-gd 323) 7)
+(check-expect (x-pt->x-gd 4) -1)
 
 
 ; a sq-part is (make-sq-part number posn boolean)
@@ -138,7 +160,10 @@
 (define (me-h LOS x y event)
   (cond [(equal? event "button-down") 
          (both (play c-hi-hat-1)
-               (toggle-square (x-pt->x-gd x) (y-pt->y-gd y) LOS))]
+               (cond
+                 [(or (negative? (y-pt->y-gd y))
+                      (negative? (x-pt->x-gd x))) LOS]
+                 [else (toggle-square (x-pt->x-gd x) (y-pt->y-gd y) LOS)]))]
         [else LOS]))
 
 (check-expect (me-h LOB-EX (x-offset 1) (y-offset 2)  "button-down")
