@@ -9,7 +9,7 @@
 (define MT-SCN (empty-scene WIDTH HEIGHT))
 (define SQR-SIZE (/ WIDTH 10))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
-
+color
 (define row1sound kick)
 (define row2sound bassdrum)
 (define row3sound bassdrum-synth)
@@ -22,10 +22,10 @@
 (define row1color "blue")
 (define row2color "red")
 (define row3color "black")
-(define row4color "lilac")
+(define row4color "violet")
 (define row5color "lightblue")
 (define row6color "darkblue")
-(define row7color "white")
+(define row7color "lime")
 (define row8color "yellow")
 
 
@@ -134,7 +134,9 @@
     [else (place-image (square
                         (sq-part-len (first lod))
                         (if (sq-part-state (first lod)) "solid" "outline")
-                        "red")
+                        (mapRowtoColor (y-pt->y-gd 
+                                        (posn-y
+                                         (sq-part-posn (first lod))))))
                        (posn-x (sq-part-posn (first lod)))
                        (posn-y (sq-part-posn (first lod)))
                        (sqr-placer (rest lod)))]))
@@ -143,7 +145,7 @@
                                               (make-posn 10 20)
                                               true)
                                 empty))
-              (place-image (square 5 "solid" "red")
+              (place-image (square 5 "solid" "blue")
                            10 20
                            MT-SCN))
 
@@ -155,11 +157,13 @@
   (cond [(equal? x 0) empty]
         [else (cons (make-sq-part SQR-SIZE (make-posn (x-offset x) (y-offset y)) false) (create-row (- x 1) y))]))
 
-(check-expect (create-row 2 1) (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
-                                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty)))
-(check-expect (create-row 3 2) (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 2)) false)
-                                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 2)) false)
-                                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false) empty))))
+(check-expect (create-row 2 1)
+              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
+                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty)))
+(check-expect (create-row 3 2)
+              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 2)) false)
+                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 2)) false)
+                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false) empty))))
 
 ; grid takes an x and y and returns a list of squares
 ; with y-posns ranging from 1 to y and x-posns ranging from 1 to x
@@ -193,10 +197,10 @@
 
 ; test constants
 (define LOB-EX (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
-                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
-                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
-                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))))
+                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
+                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
+                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
+                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))))
 
 (check-expect (toggle-square (- (x-offset 2) 1) (+ (y-offset 1) 1) LOB-EX)
               (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
