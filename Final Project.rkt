@@ -9,6 +9,14 @@
 (define MT-SCN (empty-scene WIDTH HEIGHT))
 (define SQR-SIZE (/ WIDTH 10))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
+(define row1sound kick)
+(define row2sound bassdrum)
+(define row3sound bassdrum-synth)
+(define row4sound snare)
+(define row5sound clap-1)
+(define row6sound crash-cymbal)
+(define row7sound c-hi-hat-1)
+(define row8sound o-hi-hat)
 
 
 ; number -> number
@@ -27,6 +35,24 @@
 
 
 ; dummy functions
+
+;Maps the row that a button is in
+;to the sound file it is to play
+;rowNumber->sound
+(define (mapRowtoSound row)
+  (cond [(= row 1) row1sound]
+        [(= row 2) row2sound]
+        [(= row 3) row3sound]
+        [(= row 4) row4sound]
+        [(= row 5) row5sound]
+        [(= row 6) row6sound]
+        [(= row 7) row7sound]
+        [(= row 8) row8sound]
+        [else ding]
+        )
+  )
+(check-expect (mapRowtoSound 1) row1sound)
+(check-expect (mapRowtoSound 0) ding)
 
 ; number -> number
 ; separate scene into horizontal sections
