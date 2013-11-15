@@ -9,6 +9,7 @@
 (define MT-SCN (empty-scene WIDTH HEIGHT))
 (define SQR-SIZE (/ WIDTH 10))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
+
 (define row1sound kick)
 (define row2sound bassdrum)
 (define row3sound bassdrum-synth)
@@ -17,6 +18,15 @@
 (define row6sound crash-cymbal)
 (define row7sound c-hi-hat-1)
 (define row8sound o-hi-hat)
+
+(define row1color "blue")
+(define row2color "red")
+(define row3color "black")
+(define row4color "lilac")
+(define row5color "lightblue")
+(define row6color "darkblue")
+(define row7color "white")
+(define row8color "yellow")
 
 
 ; number -> number
@@ -53,6 +63,24 @@
   )
 (check-expect (mapRowtoSound 1) row1sound)
 (check-expect (mapRowtoSound 0) ding)
+
+;Maps the row that a button is in
+;to the color it should change to
+;rowNumber->sound
+(define (mapRowtoColor row)
+  (cond [(= row 1) row1color]
+        [(= row 2) row2color]
+        [(= row 3) row3color]
+        [(= row 4) row4color]
+        [(= row 5) row5color]
+        [(= row 6) row6color]
+        [(= row 7) row7color]
+        [(= row 8) row8color]
+        [else "black"]
+        )
+  )
+(check-expect (mapRowtoColor 1) row1color)
+(check-expect (mapRowtoColor 0) "black")
 
 ; number -> number
 ; separate scene into horizontal sections
@@ -184,7 +212,7 @@
 ; mouse handler handles mouse events.
 ; Depending on where the user clicked, toggles a square.
 (define (me-h LOS x y event)
-  (cond [(equal? event "button-down") 
+  (cond [(equal? event "button-down")
          (both (play c-hi-hat-1)
                (cond
                  [(or (negative? (y-pt->y-gd y))
