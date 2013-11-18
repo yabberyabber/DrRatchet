@@ -1,22 +1,17 @@
-;; The first three lines of this file were inserted by DrRacket. They record metadata
-;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-advanced-reader.ss" "lang")((modname |Final Project|) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #t #t none #f ())))
 (require rsound)
 (require 2htdp/universe)
 (require "get-file.rkt")
 (require 2htdp/image)
 ;run this with advanced student
 
-(define (s sec) (* 44100 sec))
-(define usersound (get-file))
+(define USERSOUND (get-file))
 (define WIDTH 400)
 (define HEIGHT 400)
 (define SQRS 8)
 (define MT-SCN (empty-scene WIDTH HEIGHT))
 (define SQR-SIZE (/ WIDTH 10))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
-(define measure-length (s 3))
-(define nosound (silence 1))
+(define NOSOUND (silence 1))
 
 (define row1sound kick)
 (define row2sound bassdrum)
@@ -36,6 +31,14 @@
 (define row7color "lime")
 (define row8color "yellow")
 
+; number -> number
+; returns a time value in frames from a time value in seconds
+(define (s sec) (* 44100 sec))
+
+(check-expect (s 0) 0)
+(check-expect (s 1) 44100)
+
+(define MEASURE-LENGTH (s 3))
 
 ; number -> number
 ; set the y offset value for each square
@@ -51,9 +54,6 @@
 
 (check-expect (x-offset 2) (- (* 2 (/ HEIGHT SQRS)) X-PAD))
 
-
-; dummy functions
-
 ;Maps the row that a button is in
 ;to the sound file it is to play
 ;rowNumber->sound
@@ -66,11 +66,12 @@
         [(= row 6) row6sound]
         [(= row 7) row7sound]
         [(= row 8) row8sound]
-        [else nosound]
+        [else NOSOUND]
         )
   )
+
 (check-expect (mapRowtoSound 1) row1sound)
-(check-expect (mapRowtoSound 0) nosound)
+(check-expect (mapRowtoSound 0) NOSOUND)
 
 ;Maps the row that a button is in
 ;to the color it should change to
@@ -87,6 +88,7 @@
         [else "black"]
         )
   )
+
 (check-expect (mapRowtoColor 1) row1color)
 (check-expect (mapRowtoColor 0) "black")
 
