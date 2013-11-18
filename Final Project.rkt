@@ -2,22 +2,28 @@
 ;; about the language level of this file in a form that our tools can easily process.
 #reader(lib "htdp-intermediate-reader.ss" "lang")((modname |Final Project|) (read-case-sensitive #t) (teachpacks ((lib "image.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp"))) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ((lib "image.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp")))))
 (require rsound)
+(require 2htdp/universe)
+(require 2htdp/image)
+(require "get-file.rkt")
 
+(define USERSOUND (get-file))
 (define WIDTH 400)
 (define HEIGHT 400)
 (define SQRS 8)
 (define MT-SCN (empty-scene WIDTH HEIGHT))
 (define SQR-SIZE (/ WIDTH 10))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
-color
-(define row1sound kick)
-(define row2sound bassdrum)
-(define row3sound bassdrum-synth)
-(define row4sound snare)
-(define row5sound clap-1)
-(define row6sound crash-cymbal)
-(define row7sound c-hi-hat-1)
-(define row8sound o-hi-hat)
+(define MEASURE-LENGTH 3)
+(define NOSOUND (silence 1))
+
+(define row1sound (rs-scale 1/8 kick))
+(define row2sound (rs-scale 1/8 bassdrum))
+(define row3sound (rs-scale 1/8 bassdrum-synth))
+(define row4sound (rs-scale 1/8 snare))
+(define row5sound (rs-scale 1/8 clap-1))
+(define row6sound (rs-scale 1/8 crash-cymbal))
+(define row7sound (rs-scale 1/8 c-hi-hat-1))
+(define row8sound (rs-scale 1/8 o-hi-hat))
 
 (define row1color "blue")
 (define row2color "red")
@@ -27,6 +33,13 @@ color
 (define row6color "darkblue")
 (define row7color "lime")
 (define row8color "yellow")
+
+; number -> number
+; returns a time value in frames from a time value in seconds
+(define (s sec) (* 44100 sec))
+
+(check-expect (s 0) 0)
+(check-expect (s 1) 44100)
 
 
 ; number -> number
@@ -58,11 +71,11 @@ color
         [(= row 6) row6sound]
         [(= row 7) row7sound]
         [(= row 8) row8sound]
-        [else ding]
+        [else NOSOUND]
         )
   )
 (check-expect (mapRowtoSound 1) row1sound)
-(check-expect (mapRowtoSound 0) ding)
+(check-expect (mapRowtoSound 0) NOSOUND)
 
 ;Maps the row that a button is in
 ;to the color it should change to
@@ -79,6 +92,7 @@ color
         [else "black"]
         )
   )
+
 (check-expect (mapRowtoColor 1) row1color)
 (check-expect (mapRowtoColor 0) "black")
 
@@ -217,11 +231,10 @@ color
 ; Depending on where the user clicked, toggles a square.
 (define (me-h LOS x y event)
   (cond [(equal? event "button-down")
-         (both (play c-hi-hat-1)
-               (cond
-                 [(or (negative? (y-pt->y-gd y))
-                      (negative? (x-pt->x-gd x))) LOS]
-                 [else (toggle-square (x-pt->x-gd x) (y-pt->y-gd y) LOS)]))]
+         (cond
+           [(or (negative? (y-pt->y-gd y))
+                (negative? (x-pt->x-gd x))) LOS]
+           [else (toggle-square (x-pt->x-gd x) (y-pt->y-gd y) LOS)])]
         [else LOS]))
 
 (check-expect (me-h LOB-EX (x-offset 1) (y-offset 2)  "button-down")
@@ -237,8 +250,51 @@ color
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))))
 
+; On tick function:
+(define (y-grid y)
+  (* y (/ HEIGHT SQRS)))
+
+(define (x-grid x)
+  (* x (/ WIDTH SQRS)))
+
+; a list-of-squares is one of:
+; - empty, or
+; - (cons sq-part list-of-squares)
+; list-of-squares -> rsound
+; to map each column with an rsound for the tick handler
+(define (tick-helper los)
+  (cond
+    [(empty?) (silence 1)]
+    [(= (posn-x (sq-part-posn (first los))) (x-grid 1)) row1sound]
+    [(= (posn-x (sq-part-posn (first los))) (x-grid 2)) row2sound]
+    [(= (posn-x (sq-part-posn (first los))) (x-grid 3)) row3sound]
+    [(= (posn-x (sq-part-posn (first los))) (x-grid 4)) row4sound]
+    [(= (posn-x (sq-part-posn (first los))) (x-grid 5)) row5sound]
+    [(= (posn-x (sq-part-posn (first los))) (x-grid 6)) row6sound]
+    [(= (posn-x (sq-part-posn (first los))) (x-grid 7)) row7sound]
+    [(= (posn-x (sq-part-posn (first los))) (x-grid 8)) row8sound]
+    [else (silence 1)]))
+
+; define pstream
+(define ps (make-pstream))
+
+; list-of-squares -> pstream
+; queue a pstream depending on the time
+(define (tick-handler los)
+  (both (cond
+          [(empty? los) ps]
+          [(sq-part-state (first los)) (both (pstream-queue ps
+                                                            (mapRowtoSound (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
+                                                            (round (+ (* (/ (s MEASURE-LENGTH) SQRS)
+                                                                         (x-pt->x-gd (posn-x (sq-part-posn (first los)))))
+                                                                      (+ (pstream-current-frame ps) 2400))))
+                                             (tick-handler (rest los)))]
+          [else (tick-handler (rest los))])
+        los))
+
 
 ;big bang
 (big-bang (create-grid SQRS SQRS empty)
           [to-draw sqr-placer]
-          [on-mouse me-h])
+          [on-mouse me-h]
+          [on-tick tick-handler MEASURE-LENGTH])
