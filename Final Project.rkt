@@ -1,10 +1,10 @@
-;; The first three lines of this file were inserted by DrRacket. They record metadata
-;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-intermediate-reader.ss" "lang")((modname |Final Project|) (read-case-sensitive #t) (teachpacks ((lib "image.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp"))) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ((lib "image.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp")))))
 (require rsound)
 (require 2htdp/universe)
+(require "get-file.rkt")
 (require 2htdp/image)
+;run this with advanced student
 
+(define usersound (get-file))
 (define WIDTH 400)
 (define HEIGHT 400)
 (define SQRS 8)
@@ -60,11 +60,11 @@
         [(= row 6) row6sound]
         [(= row 7) row7sound]
         [(= row 8) row8sound]
-        [else (silence 1)]
+        [else usersound]
         )
   )
 (check-expect (mapRowtoSound 1) row1sound)
-(check-expect (mapRowtoSound 0) ding)
+(check-expect (mapRowtoSound 0) usersound)
 
 ;Maps the row that a button is in
 ;to the color it should change to
@@ -218,7 +218,7 @@
 ; mouse handler handles mouse events.
 ; Depending on where the user clicked, toggles a square.
 (define (me-h LOS x y event)
-  (cond [(or (equal? event "button-down") (equal? event "drag"))
+  (cond [(equal? event "button-down")
          (both (play (mapRowtoSound (y-pt->y-gd y)))
                (cond
                  [(or (negative? (y-pt->y-gd y))
