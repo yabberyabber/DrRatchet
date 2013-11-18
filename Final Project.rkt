@@ -57,7 +57,7 @@
         [(= row 6) row6sound]
         [(= row 7) row7sound]
         [(= row 8) row8sound]
-        [else ding]
+        [else (silence 1)]
         )
   )
 (check-expect (mapRowtoSound 1) row1sound)
