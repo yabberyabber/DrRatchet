@@ -1,9 +1,13 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-advanced-reader.ss" "lang")((modname |Final Project|) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #t #t none #f ())))
 (require rsound)
 (require 2htdp/universe)
 (require "get-file.rkt")
 (require 2htdp/image)
 ;run this with advanced student
 
+(define (s sec) (* 44100 sec))
 (define usersound (get-file))
 (define WIDTH 400)
 (define HEIGHT 400)
@@ -11,6 +15,8 @@
 (define MT-SCN (empty-scene WIDTH HEIGHT))
 (define SQR-SIZE (/ WIDTH 10))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
+(define measure-length (s 3))
+(define nosound (silence 1))
 
 (define row1sound kick)
 (define row2sound bassdrum)
@@ -60,11 +66,11 @@
         [(= row 6) row6sound]
         [(= row 7) row7sound]
         [(= row 8) row8sound]
-        [else usersound]
+        [else nosound]
         )
   )
 (check-expect (mapRowtoSound 1) row1sound)
-(check-expect (mapRowtoSound 0) usersound)
+(check-expect (mapRowtoSound 0) nosound)
 
 ;Maps the row that a button is in
 ;to the color it should change to
