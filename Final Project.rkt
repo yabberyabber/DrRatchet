@@ -4,9 +4,9 @@
 (require rsound)
 (require 2htdp/universe)
 (require 2htdp/image)
-(require "get-file.rkt")
+;(require "get-file.rkt")
 
-(define USERSOUND (get-file))
+;(define USERSOUND (get-file))
 (define WIDTH 400)
 (define HEIGHT 400)
 (define SQRS 8)
