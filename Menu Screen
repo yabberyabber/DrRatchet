@@ -1,0 +1,21 @@
+; CONSTANTS
+(define W-WIDTH 600)
+(define W-HEIGHT 450)
+
+; create empty space for menu screen
+(define (draw-space world)
+  (empty-scene W-WIDTH W-HEIGHT))
+
+; create the menu screen
+(define (draw-world world)
+  (place-image (text "Dr. Ratchet's Music Maker" 45 "blue") 300 50
+  (place-image (text "Directions: Click any box to turn its sound on," 28 "black") 300 150            
+  (place-image (text "and again to turn its sound off. Sounds that are" 28 "black") 300 180 
+  (place-image (text "on will play when the time line crosses their" 28 "black") 300 210
+  (place-image (text "respective boxes." 28 "black") 300 240             
+  (place-image (text "Have fun and make some music!" 35 "blue") 300 340 
+               (draw-space world))))))))
+
+; big bang
+(big-bang 0
+     [to-draw draw-world])
