@@ -157,6 +157,16 @@
 ; -sq-part-state
 (define-struct sq-part (len posn state))
 
+(define (draw-world world)
+  (place-image (text "Kick" 20 "blue") 425 25
+   (place-image (text "Bass Drum" 19 "red") 455 75             
+    (place-image (text "Bass Drum Synth" 18 "black") 475 125
+     (place-image (text "Snare" 19 "violet") 430 175
+      (place-image (text "Clap" 20 "lightblue") 425 225
+       (place-image (text "Clash Cymbal" 18 "darkblue")  460 275  
+        (place-image (text "Closed Hi Hat" 18 "lime") 460 325
+         (place-image (text "Open Hi Hat" 18 "yellow") 455 375
+          (sqr-placer world))))))))))
 
 ; a list-of-dims is one of:
 ; - empty, or
@@ -174,21 +184,9 @@
                                          (sq-part-posn (first lod))))))
                        (posn-x (sq-part-posn (first lod)))
                        (posn-y (sq-part-posn (first lod)))
-                                              
-          (place-image (text "Kick" 20 "blue") 425 25
-          (place-image (text "Bass Drum" 19 "red") 455 75             
-          (place-image (text "Bass Drum Synth" 18 "black") 475 125
-          (place-image (text "Snare" 19 "violet") 430 175
-          (place-image (text "Clap" 20 "lightblue") 425 225
-          (place-image (text "Clash Cymbal" 18 "darkblue")  460 275  
-          (place-image (text "Closed Hi Hat" 18 "lime") 460 325
-          (place-image (text "Open Hi Hat" 18 "yellow") 455 375
-                        
-                       (sqr-placer (rest lod)))))))))))  
-          
-          ])) 
+                       (sqr-placer (rest lod)))])) 
 
-(check-expect (sqr-placer (cons (make-sq-part 5
+(check-expect (draw-world (cons (make-sq-part 5
                                               (make-posn 10 20)
                                               true)
                                 empty))
@@ -201,7 +199,7 @@
           (place-image (text "Clap" 20 "lightblue") 425 225
           (place-image (text "Clash Cymbal" 18 "darkblue")  460 275  
           (place-image (text "Closed Hi Hat" 18 "lime") 460 325
-          (place-image (text "Open Hi Hat" 18 "yellow") 455 375))))))))))
+          (place-image (text "Open Hi Hat" 18 "yellow") 455 375 MT-SCN))))))))))
 
 
 ; create-row takes an x and y and returns a list of 
@@ -271,7 +269,7 @@
 ; mouse handler handles mouse events.
 ; Depending on where the user clicked, toggles a square.
 (define (me-h LOS x y event)
-  (cond [(or (equal? event "button-down") (equal? event "drag"))
+  (cond [(equal? event "button-down")
          (cond
            [(or (negative? (y-pt->y-gd y))
                 (negative? (x-pt->x-gd x))) LOS]
@@ -342,6 +340,6 @@
 ;
 ;;;;;
 (big-bang (create-grid SQRS SQRS empty)
-          [to-draw sqr-placer]
+          [to-draw draw-world]
           [on-mouse me-h]
           [on-tick tick-handler MEASURE-LENGTH])
