@@ -11,6 +11,7 @@
 ; CONSTANTS
 ;
 ;;;;;
+
 ;(define USERSOUND (get-file))
 ; World
 (define WIDTH 400)
@@ -133,6 +134,7 @@
 
 (check-expect (y-pt->y-gd 31) 1)
 (check-expect (y-pt->y-gd 46) -1)
+
 ; Maps a x coordinate of a square to a column
 ; number -> number
 ; separate scene into vertical sections
@@ -322,7 +324,7 @@
 ; list-of-squares -> rsound
 ; to map each column with an rsound for the tick handler
 (define (tick-helper los)
-  (cond
+    (cond
     [(empty?) (silence 1)]
     [(= (posn-x (sq-part-posn (first los))) (x-grid 1)) row1sound]
     [(= (posn-x (sq-part-posn (first los))) (x-grid 2)) row2sound]
@@ -351,12 +353,33 @@
     [else (queuer (rest los))]))
 
 ; world -> world
+; change the time in the world
+(define (world-time-change w)
+  (make-world (world-boxes w) (add1 (world-time w))))
+
+; world frame -> boolean
+; tell if it is time to play or not
+(define (play-yet? w t)
+  (< (- (world-time w) SOUND-BUFFER) t))
+
+(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
+                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
+                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
+                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 20000) 22050) true)
+(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
+                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
+                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
+                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 12314) 22050) false)
+
+; world -> world
 ; queue a pstream depending on the time and update time of world
 (define (tick-handler w)
   (both (if (= (modulo (world-time w) (* MEASURE-LENGTH 28)) 0)
             (queuer (world-boxes w))
             w)
-        (make-world (world-boxes w) (+ 1 (world-time w)))))
+        (world-time-change w)))
 
 ;;;;;
 ;
