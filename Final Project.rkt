@@ -8,11 +8,11 @@
 
 ;;;;;
 ;
-;CONSTANTS
+; CONSTANTS
 ;
 ;;;;;
 ;(define USERSOUND (get-file))
-;World
+; World
 (define WIDTH 400)
 (define HEIGHT 400)
 (define W-WIDTH 600)
@@ -22,6 +22,7 @@
 (define SQR-SIZE (/ WIDTH 10))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
 (define MEASURE-LENGTH 3)
+(define SOUND-BUFFER 2400)
 
 (define row1color "blue")
 (define row2color "red")
@@ -45,10 +46,10 @@
 
 ;;;;;
 ;
-;HELPER FUNCTIONS
+; HELPER FUNCTIONS
 ;
 ;;;;;
-;Frames to Seconds
+; Frames to Seconds
 ; number -> number
 ; returns a time value in frames from a time value in seconds
 (define (s sec) (* 44100 sec))
@@ -66,7 +67,7 @@
   (- (* n (/ WIDTH SQRS)) (/ WIDTH (* 2 SQRS))))
 
 (check-expect (y-offset 5) (- (* 5 (/ WIDTH SQRS)) (/ WIDTH (* 2 SQRS))))
-;X Offset for Squares
+; X Offset for Squares
 ; number -> number
 ; set the x offset value for each square
 (define (x-offset n)
@@ -74,9 +75,9 @@
 
 (check-expect (x-offset 2) (- (* 2 (/ HEIGHT SQRS)) X-PAD))
 
-;rowNumber-> rsound
-;Maps the row that a button is in
-;to the sound file it is to play
+; rowNumber-> rsound
+; Maps the row that a button is in
+; to the sound file it is to play
 
 (define (mapRowtoSound row)
   (cond [(= row 1) row1sound]
@@ -118,15 +119,15 @@
 ; separate scene into horizontal sections
 (define (y-pt->y-gd y)
   (cond
-    [(< 0 y (- (y-offset 1) (/ SQR-SIZE 2))) -1]
+    [(< 0 y (- (y-offset 1) (/ SQR-SIZE 2))) 0]
     [(< (+ (y-offset 1) (/ SQR-SIZE 2)) y (- (y-offset 2) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 2) (/ SQR-SIZE 2)) y (- (y-offset 3) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 3) (/ SQR-SIZE 2)) y (- (y-offset 4) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 4) (/ SQR-SIZE 2)) y (- (y-offset 5) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 5) (/ SQR-SIZE 2)) y (- (y-offset 6) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 6) (/ SQR-SIZE 2)) y (- (y-offset 7) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 7) (/ SQR-SIZE 2)) y (- (y-offset 8) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 8) (/ SQR-SIZE 2)) y HEIGHT) -1]
+    [(< (+ (y-offset 2) (/ SQR-SIZE 2)) y (- (y-offset 3) (/ SQR-SIZE 2))) -2]
+    [(< (+ (y-offset 3) (/ SQR-SIZE 2)) y (- (y-offset 4) (/ SQR-SIZE 2))) -3]
+    [(< (+ (y-offset 4) (/ SQR-SIZE 2)) y (- (y-offset 5) (/ SQR-SIZE 2))) -4]
+    [(< (+ (y-offset 5) (/ SQR-SIZE 2)) y (- (y-offset 6) (/ SQR-SIZE 2))) -5]
+    [(< (+ (y-offset 6) (/ SQR-SIZE 2)) y (- (y-offset 7) (/ SQR-SIZE 2))) -6]
+    [(< (+ (y-offset 7) (/ SQR-SIZE 2)) y (- (y-offset 8) (/ SQR-SIZE 2))) -7]
+    [(< (+ (y-offset 8) (/ SQR-SIZE 2)) y HEIGHT) -8]
     [else (ceiling (* (/ y HEIGHT) SQRS))]))
 
 (check-expect (y-pt->y-gd 31) 1)
@@ -157,6 +158,16 @@
 ; -sq-part-state
 (define-struct sq-part (len posn state))
 
+(define (draw-world world)
+  (place-image (text "Kick" 20 "blue") 425 25
+   (place-image (text "Bass Drum" 19 "red") 455 75             
+    (place-image (text "Bass Drum Synth" 18 "black") 475 125
+     (place-image (text "Snare" 19 "violet") 430 175
+      (place-image (text "Clap" 20 "lightblue") 425 225
+       (place-image (text "Clash Cymbal" 18 "darkblue")  460 275  
+        (place-image (text "Closed Hi Hat" 18 "lime") 460 325
+         (place-image (text "Open Hi Hat" 18 "yellow") 455 375
+          (sqr-placer world))))))))))
 
 ; a list-of-dims is one of:
 ; - empty, or
@@ -174,21 +185,9 @@
                                          (sq-part-posn (first lod))))))
                        (posn-x (sq-part-posn (first lod)))
                        (posn-y (sq-part-posn (first lod)))
-                                              
-          (place-image (text "Kick" 20 "blue") 425 25
-          (place-image (text "Bass Drum" 19 "red") 455 75             
-          (place-image (text "Bass Drum Synth" 18 "black") 475 125
-          (place-image (text "Snare" 19 "violet") 430 175
-          (place-image (text "Clap" 20 "lightblue") 425 225
-          (place-image (text "Clash Cymbal" 18 "darkblue")  460 275  
-          (place-image (text "Closed Hi Hat" 18 "lime") 460 325
-          (place-image (text "Open Hi Hat" 18 "yellow") 455 375
-                        
-                       (sqr-placer (rest lod)))))))))))  
-          
-          ])) 
+                       (sqr-placer (rest lod)))])) 
 
-(check-expect (sqr-placer (cons (make-sq-part 5
+(check-expect (draw-world (cons (make-sq-part 5
                                               (make-posn 10 20)
                                               true)
                                 empty))
@@ -201,7 +200,7 @@
           (place-image (text "Clap" 20 "lightblue") 425 225
           (place-image (text "Clash Cymbal" 18 "darkblue")  460 275  
           (place-image (text "Closed Hi Hat" 18 "lime") 460 325
-          (place-image (text "Open Hi Hat" 18 "yellow") 455 375))))))))))
+          (place-image (text "Open Hi Hat" 18 "yellow") 455 375 MT-SCN))))))))))
 
 
 ; create-row takes an x and y and returns a list of 
@@ -271,9 +270,9 @@
 ; mouse handler handles mouse events.
 ; Depending on where the user clicked, toggles a square.
 (define (me-h LOS x y event)
-  (cond [(or (equal? event "button-down") (equal? event "drag"))
+  (cond [(equal? event "button-down")
          (cond
-           [(or (negative? (y-pt->y-gd y))
+           [(or (or (negative? (y-pt->y-gd y)) (zero? (y-pt->y-gd y)))
                 (negative? (x-pt->x-gd x))) LOS]
            [else (toggle-square (x-pt->x-gd x) (y-pt->y-gd y) LOS)])]
         [else LOS]))
@@ -331,17 +330,17 @@
                                                             (mapRowtoSound (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
                                                             (round (+ (* (/ (s MEASURE-LENGTH) SQRS)
                                                                          (x-pt->x-gd (posn-x (sq-part-posn (first los)))))
-                                                                      (+ (pstream-current-frame ps) 2400))))
+                                                                      (+ (pstream-current-frame ps) SOUND-BUFFER))))
                                              (tick-handler (rest los)))]
           [else (tick-handler (rest los))])
         los))
 
 ;;;;;
 ;
-;BIG BANG
+; BIG BANG
 ;
 ;;;;;
 (big-bang (create-grid SQRS SQRS empty)
-          [to-draw sqr-placer]
+          [to-draw draw-world]
           [on-mouse me-h]
           [on-tick tick-handler MEASURE-LENGTH])
