@@ -22,7 +22,7 @@
 (define SQR-SIZE (/ WIDTH 10))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
 (define MEASURE-LENGTH 3)
-(define SOUND-BUFFER 2400)
+(define SOUND-BUFFER 2500)
 
 (define row1color "blue")
 (define row2color "red")
@@ -32,23 +32,24 @@
 (define row6color "darkblue")
 (define row7color "lime")
 (define row8color "yellow")
+
 ;Pstream
 (define NOSOUND (silence 1))
-
-(define row1sound (rs-scale 1/8 kick))
-(define row2sound (rs-scale 1/8 bassdrum))
-(define row3sound (rs-scale 1/8 bassdrum-synth))
-(define row4sound (rs-scale 1/8 snare))
-(define row5sound (rs-scale 1/8 clap-1))
-(define row6sound (rs-scale 1/8 crash-cymbal))
-(define row7sound (rs-scale 1/8 c-hi-hat-1))
-(define row8sound (rs-scale 1/8 o-hi-hat))
+(define row1sound (rs-scale 4/17 kick))
+(define row2sound (rs-scale 4/17 bassdrum))
+(define row3sound (rs-scale 4/17 bassdrum-synth))
+(define row4sound (rs-scale 1/17 snare))
+(define row5sound (rs-scale 1/17 clap-1))
+(define row6sound (rs-scale 1/17 crash-cymbal))
+(define row7sound (rs-scale 1/17 c-hi-hat-1))
+(define row8sound (rs-scale 1/17 o-hi-hat))
 
 ;;;;;
 ;
 ; HELPER FUNCTIONS
 ;
 ;;;;;
+
 ; Frames to Seconds
 ; number -> number
 ; returns a time value in frames from a time value in seconds
@@ -95,8 +96,8 @@
 (check-expect (mapRowtoSound 0) NOSOUND)
 
 ;rowNumber->sound
-;Maps the row that a button is in
-;to the color it should change to
+; Maps the row that a button is in
+; to the color it should change to
 
 (define (mapRowtoColor row)
   (cond [(= row 1) row1color]
@@ -114,7 +115,7 @@
 (check-expect (mapRowtoColor 1) row1color)
 (check-expect (mapRowtoColor 0) "black")
 
-;Maps a y coordinate of a square to a row
+; Maps a y coordinate of a square to a row
 ; number -> number
 ; separate scene into horizontal sections
 (define (y-pt->y-gd y)
@@ -132,7 +133,7 @@
 
 (check-expect (y-pt->y-gd 31) 1)
 (check-expect (y-pt->y-gd 46) -1)
-;;Maps a x coordinate of a square to a column
+; Maps a x coordinate of a square to a column
 ; number -> number
 ; separate scene into vertical sections
 (define (x-pt->x-gd x)
@@ -158,16 +159,24 @@
 ; -sq-part-state
 (define-struct sq-part (len posn state))
 
-(define (draw-world world)
-  (place-image (text "Kick" 20 "blue") 425 25
-   (place-image (text "Bass Drum" 19 "red") 455 75             
-    (place-image (text "Bass Drum Synth" 18 "black") 475 125
-     (place-image (text "Snare" 19 "violet") 430 175
-      (place-image (text "Clap" 20 "lightblue") 425 225
-       (place-image (text "Clash Cymbal" 18 "darkblue")  460 275  
-        (place-image (text "Closed Hi Hat" 18 "lime") 460 325
-         (place-image (text "Open Hi Hat" 18 "yellow") 455 375
-          (sqr-placer world))))))))))
+; a world is (make-world sq-part number)
+(define-struct world (boxes time))
+
+(define (draw-world w)
+  (add-line (place-image (text "Kick" 20 "blue") 425 25
+    (place-image (text "Bass Drum" 19 "red") 455 75             
+     (place-image (text "Bass Drum Synth" 18 "black") 475 125
+      (place-image (text "Snare" 19 "violet") 430 175
+       (place-image (text "Clap" 20 "lightblue") 425 225
+        (place-image (text "Clash Cymbal" 18 "darkblue")  460 275  
+         (place-image (text "Closed Hi Hat" 18 "lime") 460 325
+          (place-image (text "Open Hi Hat" 18 "yellow") 455 375
+           (sqr-placer  (world-boxes w))))))))))
+            (* (/ WIDTH (* 3 28)) (modulo (- (world-time w) (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) (* MEASURE-LENGTH 28)))
+            0
+            (* (/ WIDTH (* 3 28)) (modulo (- (world-time w) (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) (* MEASURE-LENGTH 28)))
+            HEIGHT
+            "black"))
 
 ; a list-of-dims is one of:
 ; - empty, or
@@ -187,11 +196,11 @@
                        (posn-y (sq-part-posn (first lod)))
                        (sqr-placer (rest lod)))])) 
 
-(check-expect (draw-world (cons (make-sq-part 5
+(check-expect (draw-world (make-world (cons (make-sq-part 5
                                               (make-posn 10 20)
                                               true)
-                                empty))
-              (place-image (square 5 "solid" "blue")
+                                empty) 0))
+              (add-line (place-image (square 5 "solid" "blue")
                            10 20
                               (place-image (text "Kick" 20 "blue") 425 25
           (place-image (text "Bass Drum" 19 "red") 455 75             
@@ -200,7 +209,12 @@
           (place-image (text "Clap" 20 "lightblue") 425 225
           (place-image (text "Clash Cymbal" 18 "darkblue")  460 275  
           (place-image (text "Closed Hi Hat" 18 "lime") 460 325
-          (place-image (text "Open Hi Hat" 18 "yellow") 455 375 MT-SCN))))))))))
+          (place-image (text "Open Hi Hat" 18 "yellow") 455 375 MT-SCN)))))))))
+                        (* (/ WIDTH (* 3 28)) (modulo (- 0 (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) (* MEASURE-LENGTH 28)))
+                        0
+                        (* (/ WIDTH (* 3 28)) (modulo (- 0 (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) (* MEASURE-LENGTH 28)))
+                        HEIGHT
+                        "black"))
 
 
 ; create-row takes an x and y and returns a list of 
@@ -249,13 +263,13 @@
 
 
 ; test constants
-(define LOB-EX (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
+(define LOB-EX (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                            (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                  (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))))
+                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0))
 
-(check-expect (toggle-square (- (x-offset 2) 1) (+ (y-offset 1) 1) LOB-EX)
+(check-expect (toggle-square (- (x-offset 2) 1) (+ (y-offset 1) 1) (world-boxes LOB-EX))
               (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
@@ -267,33 +281,35 @@
 ;Mouse Handler
 ;
 ;;;;
+
 ; mouse handler handles mouse events.
 ; Depending on where the user clicked, toggles a square.
-(define (me-h LOS x y event)
+(define (me-h w x y event)
   (cond [(equal? event "button-down")
          (cond
            [(or (or (negative? (y-pt->y-gd y)) (zero? (y-pt->y-gd y)))
-                (negative? (x-pt->x-gd x))) LOS]
-           [else (toggle-square (x-pt->x-gd x) (y-pt->y-gd y) LOS)])]
-        [else LOS]))
+                (negative? (x-pt->x-gd x))) w]
+           [else (make-world (toggle-square (x-pt->x-gd x) (y-pt->y-gd y) (world-boxes w)) (world-time w))])]
+        [else w]))
 
 (check-expect (me-h LOB-EX (x-offset 1) (y-offset 2)  "button-down")
-              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
+              (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))))
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0))
 (check-expect (me-h LOB-EX (- (x-offset 2) 3) (+ (y-offset 1) 2) "button-down")
-              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) true)
+              (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) true)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))))
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0))
 ;;;;;
 ;
 ; ON TICK
 ;
 ;;;;;
+
 (define (y-grid y)
   (* y (/ HEIGHT SQRS)))
 
@@ -322,25 +338,33 @@
 (define ps (make-pstream))
 
 ; list-of-squares -> pstream
-; queue a pstream depending on the time
-(define (tick-handler los)
-  (both (cond
-          [(empty? los) ps]
-          [(sq-part-state (first los)) (both (pstream-queue ps
-                                                            (mapRowtoSound (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
-                                                            (round (+ (* (/ (s MEASURE-LENGTH) SQRS)
-                                                                         (x-pt->x-gd (posn-x (sq-part-posn (first los)))))
-                                                                      (+ (pstream-current-frame ps) SOUND-BUFFER))))
-                                             (tick-handler (rest los)))]
-          [else (tick-handler (rest los))])
-        los))
+; queue a pstream
+(define (queuer los)
+  (cond
+    [(empty? los) ps]
+    [(sq-part-state (first los)) (both (pstream-queue ps
+                                                      (mapRowtoSound (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
+                                                      (round (+ (* (/ (s MEASURE-LENGTH) SQRS)
+                                                                   (x-pt->x-gd (posn-x (sq-part-posn (first los)))))
+                                                                (+ (pstream-current-frame ps) SOUND-BUFFER))))
+                                       (queuer (rest los)))]
+    [else (queuer (rest los))]))
+
+; world -> world
+; queue a pstream depending on the time and update time of world
+(define (tick-handler w)
+  (both (if (= (modulo (world-time w) (* MEASURE-LENGTH 28)) 0)
+            (queuer (world-boxes w))
+            w)
+        (make-world (world-boxes w) (+ 1 (world-time w)))))
 
 ;;;;;
 ;
 ; BIG BANG
 ;
 ;;;;;
-(big-bang (create-grid SQRS SQRS empty)
+
+(big-bang (make-world (create-grid SQRS SQRS empty) 0)
           [to-draw draw-world]
           [on-mouse me-h]
-          [on-tick tick-handler MEASURE-LENGTH])
+          [on-tick tick-handler])
