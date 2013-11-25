@@ -35,7 +35,7 @@
 (define SQR-DIST (/ (image-height BUTTON-GREEN) 2))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
 (define MEASURE-LENGTH 3)
-(define SOUND-BUFFER 2500)
+(define SOUND-BUFFER (/ (* 44100 MEASURE-LENGTH) 28))
 
 (define row1color "blue")
 (define row2color "red")
@@ -202,11 +202,13 @@
          (place-image (text "Closed Hi Hat" 18 "lime") 460 325
           (place-image (text "Open Hi Hat" 18 "HotPink") 455 375
            (sqr-placer  (world-boxes w))))))))))
-                (* (/ WIDTH (* 3 28)) (modulo (- (world-time w) (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) 
-                                              (* MEASURE-LENGTH 28)))
+                (* (/ WIDTH (s MEASURE-LENGTH)) 
+                   (modulo (round (- (pstream-current-frame ps) SOUND-BUFFER (/ (s MEASURE-LENGTH) SQRS)))
+                           (s MEASURE-LENGTH)))
                 0
-                (* (/ WIDTH (* 3 28)) (modulo (- (world-time w) (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) 
-                                              (* MEASURE-LENGTH 28)))
+                (* (/ WIDTH (s MEASURE-LENGTH)) 
+                   (modulo (round (- (pstream-current-frame ps) SOUND-BUFFER (/ (s MEASURE-LENGTH) SQRS)))
+                           (s MEASURE-LENGTH)))
             HEIGHT
             "black")))
 
@@ -410,14 +412,13 @@
     (define los (world-boxes w))]
     (cond
       [(empty? los) ps]
-      [(and (play-yet? current-time (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
+      [(and (play-yet? current-time (x-pt->x-gd (posn-x (sq-part-posn (first los)))))
             (sq-part-state (first los))) 
        (both (pstream-queue ps
                             (mapRowtoSound (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
                             (round 
-                             (+ (- (pstream-current-frame ps) (modulo (pstream-current-frame ps) (s MEASURE-LENGTH))) 
-                                (* (/ (s MEASURE-LENGTH) SQRS) (x-pt->x-gd (posn-x (sq-part-posn (first los))))) 
-                                SOUND-BUFFER)))
+                             (next-time-to-play (pstream-current-frame ps) 
+                                                (x-pt->x-gd (posn-x (sq-part-posn (first los)))))))
              (queuer (make-world (rest los)
                                  (world-time w)
                                  (world-menu w)
@@ -427,6 +428,13 @@
                                 (world-menu w)
                                 (world-next-play-time w)))])))
    
+;; next-time-to-play given a box and the current time will determine the next time that box will play
+;; number number -> number
+(define (next-time-to-play now col)
+  (+ (* (floor (/ now (s MEASURE-LENGTH))) (s MEASURE-LENGTH))
+     (* col (s MEASURE-LENGTH) 1/8)
+     SOUND-BUFFER))
+
 ; world -> world
 ; change the time in the world
 (define (world-time-change w)
@@ -439,7 +447,7 @@
 ; tell if it is time to play or not
 (define (play-yet? curr-time col)
   (and (> curr-time (* (/ (s MEASURE-LENGTH) SQRS) col))
-       (< curr-time (+ SOUND-BUFFER (* (/ (s MEASURE-LENGTH) SQRS) col)))))
+       (< curr-time (next-time-to-play (pstream-current-frame ps) col))))
 
 #;(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
