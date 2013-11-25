@@ -202,9 +202,11 @@
          (place-image (text "Closed Hi Hat" 18 "lime") 460 325
           (place-image (text "Open Hi Hat" 18 "HotPink") 455 375
            (sqr-placer  (world-boxes w))))))))))
-            (* (/ WIDTH (* 3 28)) (modulo (- (world-time w) (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) (* MEASURE-LENGTH 28)))
-            0
-            (* (/ WIDTH (* 3 28)) (modulo (- (world-time w) (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) (* MEASURE-LENGTH 28)))
+                (* (/ WIDTH (* 3 28)) (modulo (- (world-time w) (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) 
+                                              (* MEASURE-LENGTH 28)))
+                0
+                (* (/ WIDTH (* 3 28)) (modulo (- (world-time w) (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) 
+                                              (* MEASURE-LENGTH 28)))
             HEIGHT
             "black")))
 
