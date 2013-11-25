@@ -13,15 +13,15 @@
 ;;;;;
 
 ; Buttons:
-(define BUTTON-BROWN )
-(define BUTTON-GREEN )
-(define BUTTON-PINK )
-(define BUTTON-BLUE )
-(define BUTTON-YELLOW )
-(define BUTTON-RED )
-(define BUTTON-LIGHTBLUE )
-(define BUTTON-LIGHTGREEN )
-(define BUTTON-OFF )
+(define BUTTON-BROWN (bitmap/file "./Brown Button.jpg"))
+(define BUTTON-GREEN (bitmap/file "./Green Button.png"))
+(define BUTTON-PINK (bitmap/file "./Pink Button.png"))
+(define BUTTON-BLUE (bitmap/file "./Blue Button.png"))
+(define BUTTON-YELLOW (bitmap/file "./Yellow Button.png"))
+(define BUTTON-RED (bitmap/file "./Red Button.png"))
+(define BUTTON-LIGHTBLUE (bitmap/file "./Light Blue Button.png"))
+(define BUTTON-LIGHTGREEN (bitmap/file "./Light Green Button.png"))
+(define BUTTON-OFF (bitmap/file "./Off Button.png"))
 
 ;(define USERSOUND (get-file))
 ; World
