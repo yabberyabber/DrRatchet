@@ -48,14 +48,14 @@
 
 ;Pstream
 (define NOSOUND (silence 1))
-(define row1sound (rs-scale 4/17 kick))
-(define row2sound (rs-scale 4/17 bassdrum))
-(define row3sound (rs-scale 10/17 bassdrum-synth))
-(define row4sound (rs-scale 1/17 snare))
-(define row5sound (rs-scale 1/17 clap-1))
-(define row6sound (rs-scale 1/17 crash-cymbal))
-(define row7sound (rs-scale 1/17 c-hi-hat-1))
-(define row8sound (rs-scale 1/17 o-hi-hat))
+(define row1sound (rs-scale 1 kick))
+(define row2sound (rs-scale 1 bassdrum))
+(define row3sound (rs-scale 1 bassdrum-synth))
+(define row4sound (rs-scale 1 snare))
+(define row5sound (rs-scale 1 clap-1))
+(define row6sound (rs-scale 1 crash-cymbal))
+(define row7sound (rs-scale 1 c-hi-hat-1))
+(define row8sound (rs-scale 1 o-hi-hat))
 
 ;;;;;
 ;
@@ -404,23 +404,27 @@
 ; queue a pstream
 (define (queuer w)
   (local
-    [(define los (world-boxes w))]
+    [(define current-time (+ (modulo (pstream-current-frame ps) (s MEASURE-LENGTH)) SOUND-BUFFER))
+    (define los (world-boxes w))]
     (cond
       [(empty? los) ps]
-      [(sq-part-state (first los)) (both (pstream-queue ps
-                                                        (mapRowtoSound (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
-                                                        (round (+ (* (/ (s MEASURE-LENGTH) SQRS)
-                                                                     (x-pt->x-gd (posn-x (sq-part-posn (first los)))))
-                                                                  (+ (pstream-current-frame ps) SOUND-BUFFER))))
-                                         (queuer (make-world (rest los)
-                                                             (world-time w)
-                                                             (world-menu w)
-                                                             (world-next-play-time w))))]
+      [(and (play-yet? current-time (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
+            (sq-part-state (first los))) 
+       (both (pstream-queue ps
+                            (mapRowtoSound (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
+                            (round 
+                             (+ (- (pstream-current-frame ps) (modulo (pstream-current-frame ps) (s MEASURE-LENGTH))) 
+                                (* (/ (s MEASURE-LENGTH) SQRS) (x-pt->x-gd (posn-x (sq-part-posn (first los))))) 
+                                SOUND-BUFFER)))
+             (queuer (make-world (rest los)
+                                 (world-time w)
+                                 (world-menu w)
+                                 (world-next-play-time w))))]
       [else (queuer (make-world (rest los)
                                 (world-time w)
                                 (world-menu w)
                                 (world-next-play-time w)))])))
-
+   
 ; world -> world
 ; change the time in the world
 (define (world-time-change w)
@@ -431,15 +435,16 @@
 
 ; world frame -> boolean
 ; tell if it is time to play or not
-(define (play-yet? w t)
-  (< (- (world-next-play-time w) SOUND-BUFFER) t))
+(define (play-yet? curr-time col)
+  (and (> curr-time (* (/ (s MEASURE-LENGTH) SQRS) col))
+       (< curr-time (+ SOUND-BUFFER (* (/ (s MEASURE-LENGTH) SQRS) col)))))
 
-(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
+#;(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 20000 false 0) 22050) true)
-(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
+#;(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
@@ -450,10 +455,8 @@
 (define (tick-handler w)
   (if (world-menu w)
       w
-      (both (if (= (modulo (world-time w) (* MEASURE-LENGTH 28)) 0)
-            (queuer w)
-            w)
-        (world-time-change w))))
+      (both (queuer w)
+            (world-time-change w))))
 
 ;;;;;
 ;
