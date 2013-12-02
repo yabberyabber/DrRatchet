@@ -23,7 +23,9 @@
 (define BUTTON-LIGHTGREEN (bitmap/file "./Light Green Button.png"))
 (define BUTTON-OFF (bitmap/file "./Off Button.png"))
 
-(define USERSOUND (get-file))
+(define USER-SELECTION (get-file))
+(define USERWAV (if (boolean? USER-SELECTION) (silence 1) (rs-scale 0.2 (rs-read USER-SELECTION))))
+
 
 ; World
 (define WIDTH 400)
@@ -375,19 +377,18 @@
                          (world-tempo w)
                          (world-offset w)
                          (world-sp-b w))]
-            [(equal? event "return")
-             (make-world (create-grid SQRS SQRS empty) (world-time w) false (world-next-play-time w) (world-sp-b w))]
+            [(equal? event "\r")
+             (make-world (create-grid SQRS SQRS empty)
+                         (world-time w)
+                         false
+                         (world-next-play-time w)
+                         (world-tempo w)
+                         (world-offset w)
+                         (world-sp-b w))]
             [(equal? event " ")
-             (if (and (and USERSOUND (world-sp-b w)) (not (world-menu w)))
-                 (both (if USERSOUND (pstream-queue ps (rs-read USERSOUND)
+             (if (and (and (world-sp-b w) (> (rs-frames USERWAV) 5)) (not (world-menu w)))
+                 (both (pstream-queue ps USERWAV
                                       (pstream-current-frame ps))
-                           (make-world (world-boxes w)
-                                       (world-time w)
-                                       (world-menu w)
-                                       (world-next-play-time w)
-                                       (world-tempo w)
-                                       (world-offset w)
-                                       (world-sp-b w)))
                        (make-world (world-boxes w)
                                    (world-time w)
                                    (world-menu w)
