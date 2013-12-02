@@ -34,6 +34,8 @@
 (define SQR-SIZE (/ WIDTH 10))
 (define SQR-DIST (/ (image-height BUTTON-GREEN) 2))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
+(define DEFAULT-TEMPO 160)   ;;in unit of bpm
+(define DEFAULT-OFFSET 0)
 (define MEASURE-LENGTH 3)
 (define SOUND-BUFFER (/ (* 44100 MEASURE-LENGTH) 28))
 (define BACKGROUND (bitmap/file "./Dr Ratchet Background.jpg"))
@@ -57,6 +59,7 @@
 (define row6sound (rs-scale 1/17 crash-cymbal))
 (define row7sound (rs-scale 1/17 c-hi-hat-1))
 (define row8sound (rs-scale 1/17 o-hi-hat))
+(define ps (make-pstream))
 
 ;;;;;
 ;
@@ -175,7 +178,7 @@
 (define-struct sq-part (len posn state))
 
 ; a world is (make-world sq-part number boolean)
-(define-struct world (boxes time menu next-play-time))
+(define-struct world (boxes time menu next-play-time tempo offset))
 
 
 ; world -> world
@@ -196,11 +199,11 @@
       (draw-menu w)
       (add-line (sqr-placer  (world-boxes w))
                 (* (/ WIDTH (s MEASURE-LENGTH)) 
-                   (modulo (round (- (pstream-current-frame ps) SOUND-BUFFER (/ (s MEASURE-LENGTH) SQRS)))
+                   (modulo (round (- (+ (pstream-current-frame ps) (world-offset w)) SOUND-BUFFER (/ (s MEASURE-LENGTH) SQRS)))
                            (s MEASURE-LENGTH)))
                 0
                 (* (/ WIDTH (s MEASURE-LENGTH)) 
-                   (modulo (round (- (pstream-current-frame ps) SOUND-BUFFER (/ (s MEASURE-LENGTH) SQRS)))
+                   (modulo (round (- (+ (pstream-current-frame ps) (world-offset w)) SOUND-BUFFER (/ (s MEASURE-LENGTH) SQRS)))
                            (s MEASURE-LENGTH)))
             HEIGHT
             "black")))
@@ -223,7 +226,7 @@
 (check-expect (draw-world (make-world (cons (make-sq-part 5
                                               (make-posn 10 20)
                                               true)
-                                empty) 0 false 0))
+                                empty) 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET))
               (add-line (place-image BUTTON-GREEN
                            10 20
                               (place-image (text "Kick" 20 "YellowGreen") 425 25
@@ -291,7 +294,7 @@
                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                            (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                  (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0))
+                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET))
 
 (check-expect (toggle-square (- (x-offset 2) 1) (+ (y-offset 1) 1) (world-boxes LOB-EX))
               (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
@@ -316,7 +319,9 @@
               (world-boxes w)
               (world-time w)
               false
-              (world-next-play-time w))]
+              (world-next-play-time w)
+              (world-tempo w)
+              (world-offset w))]
             [else w])
       (cond [(equal? event "button-down")
          (cond
@@ -326,7 +331,9 @@
                   (toggle-square (x-pt->x-gd x) (y-pt->y-gd y) (world-boxes w))
                   (world-time w)
                   (world-menu w)
-                  (world-next-play-time w))])]
+                  (world-next-play-time w)
+                  (world-tempo w)
+                  (world-offset w))])]
             [else w])))
 
 (check-expect (me-h LOB-EX (x-offset 1) (y-offset 2)  "button-down")
@@ -334,13 +341,13 @@
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0))
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET))
 (check-expect (me-h LOB-EX (- (x-offset 2) 3) (+ (y-offset 1) 2) "button-down")
               (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) true)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0))
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET))
 
 ;;;;;
 ;
@@ -357,9 +364,11 @@
              (make-world (world-boxes w)
                          (world-time w)
                          true
-                         (world-next-play-time w))]
+                         (world-next-play-time w)
+                         (world-tempo w)
+                         (world-offset w))]
             [(equal? event " ")
-             (make-world (create-grid SQRS SQRS empty) (world-time w) false (world-next-play-time w))]
+             (make-world (create-grid SQRS SQRS empty) (world-time w) false (world-next-play-time w) (world-tempo w) (world-offset w))]
             [else w])
       w))
 
@@ -393,8 +402,6 @@
     [(= (posn-x (sq-part-posn (first los))) (x-grid 8)) row8sound]
     [else (silence 1)]))
 
-; define pstream
-(define ps (make-pstream))
 
 ; world -> pstream
 ; list-of-squares -> pstream
@@ -405,28 +412,37 @@
     (define los (world-boxes w))]
     (cond
       [(empty? los) ps]
-      [(and (play-yet? current-time (x-pt->x-gd (posn-x (sq-part-posn (first los)))))
+      [(and (play-yet? current-time (world-offset w) (x-pt->x-gd (posn-x (sq-part-posn (first los)))))
             (sq-part-state (first los))) 
        (both (pstream-queue ps
                             (mapRowtoSound (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
                             (round 
                              (next-time-to-play (pstream-current-frame ps) 
+                                                (world-offset w)
                                                 (x-pt->x-gd (posn-x (sq-part-posn (first los)))))))
              (queuer (make-world (rest los)
                                  (world-time w)
                                  (world-menu w)
-                                 (world-next-play-time w))))]
+                                 (world-next-play-time w)
+                                 (world-tempo w)
+                                 (world-offset w))))]
       [else (queuer (make-world (rest los)
                                 (world-time w)
                                 (world-menu w)
-                                (world-next-play-time w)))])))
+                                (world-next-play-time w)
+                                (world-tempo w)
+                                (world-offset w)))])))
    
 ;; next-time-to-play given a box and the current time will determine the next time that box will play
 ;; number number -> number
-(define (next-time-to-play now col)
+
+
+
+(define (next-time-to-play now offset col)
   (+ (* (floor (/ now (s MEASURE-LENGTH))) (s MEASURE-LENGTH))
      (* col (s MEASURE-LENGTH) 1/8)
-     SOUND-BUFFER))
+     SOUND-BUFFER
+     offset))
 
 ; world -> world
 ; change the time in the world
@@ -434,13 +450,15 @@
   (make-world (world-boxes w)
               (add1 (world-time w))
               (world-menu w)
-              (+ (world-next-play-time w) (s (/ 1 28)))))
+              (+ (world-next-play-time w) (s (/ 1 28)))
+              (world-tempo w)
+              (world-offset w)))
 
 ; world frame -> boolean
 ; tell if it is time to play or not
-(define (play-yet? curr-time col)
+(define (play-yet? curr-time offset col)
   (and (> curr-time (* (/ (s MEASURE-LENGTH) SQRS) col))
-       (< curr-time (next-time-to-play (pstream-current-frame ps) col))))
+       (< curr-time (next-time-to-play (pstream-current-frame ps) offset col))))
 
 #;(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
@@ -467,7 +485,7 @@
 ;
 ;;;;;
 
-(big-bang (make-world (create-grid SQRS SQRS empty) 0 true 0)
+(big-bang (make-world (create-grid SQRS SQRS empty) 0 true 0 DEFAULT-TEMPO DEFAULT-OFFSET)
           [to-draw draw-world]
           [on-mouse me-h]
           [on-key ke-h]
