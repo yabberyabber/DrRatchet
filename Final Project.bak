@@ -8,11 +8,23 @@
 
 ;;;;;
 ;
-;CONSTANTS
+; CONSTANTS
 ;
 ;;;;;
+
+; Buttons:
+(define BUTTON-BROWN (bitmap/file "./Brown Button.jpg"))
+(define BUTTON-GREEN (bitmap/file "./Green Button.png"))
+(define BUTTON-PINK (bitmap/file "./Pink Button.png"))
+(define BUTTON-BLUE (bitmap/file "./Blue Button.png"))
+(define BUTTON-YELLOW (bitmap/file "./Yellow Button.png"))
+(define BUTTON-RED (bitmap/file "./Red Button.png"))
+(define BUTTON-LIGHTBLUE (bitmap/file "./Light Blue Button.png"))
+(define BUTTON-LIGHTGREEN (bitmap/file "./Light Green Button.png"))
+(define BUTTON-OFF (bitmap/file "./Off Button.png"))
+
 ;(define USERSOUND (get-file))
-;World
+; World
 (define WIDTH 400)
 (define HEIGHT 400)
 (define W-WIDTH 600)
@@ -20,8 +32,11 @@
 (define SQRS 8)
 (define MT-SCN (empty-scene W-WIDTH W-HEIGHT))
 (define SQR-SIZE (/ WIDTH 10))
+(define SQR-DIST (/ (image-height BUTTON-GREEN) 2))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
 (define MEASURE-LENGTH 3)
+(define SOUND-BUFFER (/ (* 44100 MEASURE-LENGTH) 28))
+(define BACKGROUND (bitmap/file "./Dr Ratchet Background.jpg"))
 
 (define row1color "blue")
 (define row2color "red")
@@ -31,24 +46,25 @@
 (define row6color "darkblue")
 (define row7color "lime")
 (define row8color "yellow")
+
 ;Pstream
 (define NOSOUND (silence 1))
-
-(define row1sound (rs-scale 1/8 kick))
-(define row2sound (rs-scale 1/8 bassdrum))
-(define row3sound (rs-scale 1/8 bassdrum-synth))
-(define row4sound (rs-scale 1/8 snare))
-(define row5sound (rs-scale 1/8 clap-1))
-(define row6sound (rs-scale 1/8 crash-cymbal))
-(define row7sound (rs-scale 1/8 c-hi-hat-1))
-(define row8sound (rs-scale 1/8 o-hi-hat))
+(define row1sound (rs-scale 4/17 kick))
+(define row2sound (rs-scale 4/17 bassdrum))
+(define row3sound (rs-scale 10/17 bassdrum-synth))
+(define row4sound (rs-scale 1/17 snare))
+(define row5sound (rs-scale 1/17 clap-1))
+(define row6sound (rs-scale 1/17 crash-cymbal))
+(define row7sound (rs-scale 1/17 c-hi-hat-1))
+(define row8sound (rs-scale 1/17 o-hi-hat))
 
 ;;;;;
 ;
-;HELPER FUNCTIONS
+; HELPER FUNCTIONS
 ;
 ;;;;;
-;Frames to Seconds
+
+; Frames to Seconds
 ; number -> number
 ; returns a time value in frames from a time value in seconds
 (define (s sec) (* 44100 sec))
@@ -66,7 +82,7 @@
   (- (* n (/ WIDTH SQRS)) (/ WIDTH (* 2 SQRS))))
 
 (check-expect (y-offset 5) (- (* 5 (/ WIDTH SQRS)) (/ WIDTH (* 2 SQRS))))
-;X Offset for Squares
+; X Offset for Squares
 ; number -> number
 ; set the x offset value for each square
 (define (x-offset n)
@@ -74,9 +90,9 @@
 
 (check-expect (x-offset 2) (- (* 2 (/ HEIGHT SQRS)) X-PAD))
 
-;rowNumber-> rsound
-;Maps the row that a button is in
-;to the sound file it is to play
+; rowNumber-> rsound
+; Maps the row that a button is in
+; to the sound file it is to play
 
 (define (mapRowtoSound row)
   (cond [(= row 1) row1sound]
@@ -94,57 +110,58 @@
 (check-expect (mapRowtoSound 0) NOSOUND)
 
 ;rowNumber->sound
-;Maps the row that a button is in
-;to the color it should change to
+; Maps the row that a button is in
+; to the color it should change to
 
 (define (mapRowtoColor row)
-  (cond [(= row 1) row1color]
-        [(= row 2) row2color]
-        [(= row 3) row3color]
-        [(= row 4) row4color]
-        [(= row 5) row5color]
-        [(= row 6) row6color]
-        [(= row 7) row7color]
-        [(= row 8) row8color]
-        [else "black"]
+  (cond [(= row 1) BUTTON-GREEN]
+        [(= row 2) BUTTON-BLUE]
+        [(= row 3) BUTTON-YELLOW]
+        [(= row 4) BUTTON-BROWN]
+        [(= row 5) BUTTON-LIGHTBLUE]
+        [(= row 6) BUTTON-RED]
+        [(= row 7) BUTTON-LIGHTGREEN]
+        [(= row 8) BUTTON-PINK]
+        [else BUTTON-OFF]
         )
   )
 
-(check-expect (mapRowtoColor 1) row1color)
-(check-expect (mapRowtoColor 0) "black")
+(check-expect (mapRowtoColor 1) BUTTON-GREEN)
+(check-expect (mapRowtoColor 0) BUTTON-OFF)
 
-;Maps a y coordinate of a square to a row
+; Maps a y coordinate of a square to a row
 ; number -> number
 ; separate scene into horizontal sections
 (define (y-pt->y-gd y)
   (cond
-    [(< 0 y (- (y-offset 1) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 1) (/ SQR-SIZE 2)) y (- (y-offset 2) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 2) (/ SQR-SIZE 2)) y (- (y-offset 3) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 3) (/ SQR-SIZE 2)) y (- (y-offset 4) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 4) (/ SQR-SIZE 2)) y (- (y-offset 5) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 5) (/ SQR-SIZE 2)) y (- (y-offset 6) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 6) (/ SQR-SIZE 2)) y (- (y-offset 7) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 7) (/ SQR-SIZE 2)) y (- (y-offset 8) (/ SQR-SIZE 2))) -1]
-    [(< (+ (y-offset 8) (/ SQR-SIZE 2)) y HEIGHT) -1]
+    [(< 0 y (- (y-offset 1) SQR-DIST)) 0]
+    [(< (+ (y-offset 1) SQR-DIST) y (- (y-offset 2) SQR-DIST)) -1]
+    [(< (+ (y-offset 2) SQR-DIST) y (- (y-offset 3) SQR-DIST)) -2]
+    [(< (+ (y-offset 3) SQR-DIST) y (- (y-offset 4) SQR-DIST)) -3]
+    [(< (+ (y-offset 4) SQR-DIST) y (- (y-offset 5) SQR-DIST)) -4]
+    [(< (+ (y-offset 5) SQR-DIST) y (- (y-offset 6) SQR-DIST)) -5]
+    [(< (+ (y-offset 6) SQR-DIST) y (- (y-offset 7) SQR-DIST)) -6]
+    [(< (+ (y-offset 7) SQR-DIST) y (- (y-offset 8) SQR-DIST)) -7]
+    [(< (+ (y-offset 8) SQR-DIST) y HEIGHT) -8]
     [else (ceiling (* (/ y HEIGHT) SQRS))]))
 
 (check-expect (y-pt->y-gd 31) 1)
 (check-expect (y-pt->y-gd 46) -1)
-;;Maps a x coordinate of a square to a column
+
+; Maps a x coordinate of a square to a column
 ; number -> number
 ; separate scene into vertical sections
 (define (x-pt->x-gd x)
   (cond
-    [(< 0 x (- (x-offset 1) (/ SQR-SIZE 2))) -1]
-    [(< (+ (x-offset 1) (/ SQR-SIZE 2)) x (- (x-offset 2) (/ SQR-SIZE 2))) -1]
-    [(< (+ (x-offset 2) (/ SQR-SIZE 2)) x (- (x-offset 3) (/ SQR-SIZE 2))) -1]
-    [(< (+ (x-offset 3) (/ SQR-SIZE 2)) x (- (x-offset 4) (/ SQR-SIZE 2))) -1]
-    [(< (+ (x-offset 4) (/ SQR-SIZE 2)) x (- (x-offset 5) (/ SQR-SIZE 2))) -1]
-    [(< (+ (x-offset 5) (/ SQR-SIZE 2)) x (- (x-offset 6) (/ SQR-SIZE 2))) -1]
-    [(< (+ (x-offset 6) (/ SQR-SIZE 2)) x (- (x-offset 7) (/ SQR-SIZE 2))) -1]
-    [(< (+ (x-offset 7) (/ SQR-SIZE 2)) x (- (x-offset 8) (/ SQR-SIZE 2))) -1]
-    [(< (+ (x-offset 8) (/ SQR-SIZE 2)) x WIDTH) -1]
+    [(< 0 x (- (x-offset 1) SQR-DIST)) -1]
+    [(< (+ (x-offset 1) SQR-DIST) x (- (x-offset 2) SQR-DIST)) -1]
+    [(< (+ (x-offset 2) SQR-DIST) x (- (x-offset 3) SQR-DIST)) -1]
+    [(< (+ (x-offset 3) SQR-DIST) x (- (x-offset 4) SQR-DIST)) -1]
+    [(< (+ (x-offset 4) SQR-DIST) x (- (x-offset 5) SQR-DIST)) -1]
+    [(< (+ (x-offset 5) SQR-DIST) x (- (x-offset 6) SQR-DIST)) -1]
+    [(< (+ (x-offset 6) SQR-DIST) x (- (x-offset 7) SQR-DIST)) -1]
+    [(< (+ (x-offset 7) SQR-DIST) x (- (x-offset 8) SQR-DIST)) -1]
+    [(< (+ (x-offset 8) SQR-DIST) x WIDTH) -1]
     [else (ceiling (* (/ x WIDTH) SQRS))]))
 
 (check-expect (x-pt->x-gd 323) 7)
@@ -157,6 +174,36 @@
 ; -sq-part-state
 (define-struct sq-part (len posn state))
 
+; a world is (make-world sq-part number boolean)
+(define-struct world (boxes time menu next-play-time))
+
+
+; world -> world
+; create the menu screen
+(define (draw-menu w)
+  (place-image (text "Dr. Ratchet's Music Maker" 45 "blue") 300 50
+  (place-image (text "Directions: Click any box to turn its sound on," 28 "black") 300 150            
+  (place-image (text "and again to turn its sound off. Sounds that are" 28 "black") 300 180 
+  (place-image (text "on will play when the time line crosses their" 28 "black") 300 210
+  (place-image (text "respective boxes." 28 "black") 300 240             
+  (place-image (text "Have fun and make some music!" 35 "blue") 300 340
+  (place-image (text "click to start" 28 "black") (/ W-WIDTH 2) 395
+               MT-SCN))))))))
+
+
+(define (draw-world w)
+  (if (world-menu w)
+      (draw-menu w)
+      (add-line (sqr-placer  (world-boxes w))
+                (* (/ WIDTH (s MEASURE-LENGTH)) 
+                   (modulo (round (- (pstream-current-frame ps) SOUND-BUFFER (/ (s MEASURE-LENGTH) SQRS)))
+                           (s MEASURE-LENGTH)))
+                0
+                (* (/ WIDTH (s MEASURE-LENGTH)) 
+                   (modulo (round (- (pstream-current-frame ps) SOUND-BUFFER (/ (s MEASURE-LENGTH) SQRS)))
+                           (s MEASURE-LENGTH)))
+            HEIGHT
+            "black")))
 
 ; a list-of-dims is one of:
 ; - empty, or
@@ -165,43 +212,33 @@
 ; list-of-dims number -> image
 (define (sqr-placer lod)
   (cond
-    [(empty? lod) MT-SCN]
-    [else (place-image (square
-                        (sq-part-len (first lod))
-                        (if (sq-part-state (first lod)) "solid" "outline")
-                        (mapRowtoColor (y-pt->y-gd 
-                                        (posn-y
-                                         (sq-part-posn (first lod))))))
+    [(empty? lod) BACKGROUND]
+    [else (place-image (if (sq-part-state (first lod))
+                           (mapRowtoColor (y-pt->y-gd (posn-y (sq-part-posn (first lod)))))
+                           BUTTON-OFF)
                        (posn-x (sq-part-posn (first lod)))
                        (posn-y (sq-part-posn (first lod)))
-                                              
-          (place-image (text "Kick" 20 "blue") 425 25
-          (place-image (text "Bass Drum" 19 "red") 455 75             
-          (place-image (text "Bass Drum Synth" 18 "black") 475 125
-          (place-image (text "Snare" 19 "violet") 430 175
-          (place-image (text "Clap" 20 "lightblue") 425 225
-          (place-image (text "Clash Cymbal" 18 "darkblue")  460 275  
-          (place-image (text "Closed Hi Hat" 18 "lime") 460 325
-          (place-image (text "Open Hi Hat" 18 "yellow") 455 375
-                        
-                       (sqr-placer (rest lod)))))))))))  
-          
-          ])) 
+                       (sqr-placer (rest lod)))]))
 
-(check-expect (sqr-placer (cons (make-sq-part 5
+(check-expect (draw-world (make-world (cons (make-sq-part 5
                                               (make-posn 10 20)
                                               true)
-                                empty))
-              (place-image (square 5 "solid" "blue")
+                                empty) 0 false 0))
+              (add-line (place-image BUTTON-GREEN
                            10 20
-                              (place-image (text "Kick" 20 "blue") 425 25
-          (place-image (text "Bass Drum" 19 "red") 455 75             
-          (place-image (text "Bass Drum Synth" 18 "black") 475 125
-          (place-image (text "Snare" 19 "violet") 430 175
+                              (place-image (text "Kick" 20 "YellowGreen") 425 25
+          (place-image (text "Bass Drum" 19 "RoyalBlue") 455 75             
+          (place-image (text "Bass Drum Synth" 18 "Yellow") 475 125
+          (place-image (text "Snare" 19 "Brown") 430 175
           (place-image (text "Clap" 20 "lightblue") 425 225
-          (place-image (text "Clash Cymbal" 18 "darkblue")  460 275  
+          (place-image (text "Clash Cymbal" 18 "Red")  460 275  
           (place-image (text "Closed Hi Hat" 18 "lime") 460 325
-          (place-image (text "Open Hi Hat" 18 "yellow") 455 375))))))))))
+          (place-image (text "Open Hi Hat" 18 "HotPink") 455 375 MT-SCN)))))))))
+                        (* (/ WIDTH (* 3 28)) (modulo (- 0 (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) (* MEASURE-LENGTH 28)))
+                        0
+                        (* (/ WIDTH (* 3 28)) (modulo (- 0 (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) (* MEASURE-LENGTH 28)))
+                        HEIGHT
+                        "black"))
 
 
 ; create-row takes an x and y and returns a list of 
@@ -209,7 +246,11 @@
 ; number number -> list-of-squares
 (define (create-row x y)
   (cond [(equal? x 0) empty]
-        [else (cons (make-sq-part SQR-SIZE (make-posn (x-offset x) (y-offset y)) false) (create-row (- x 1) y))]))
+        [else (cons (make-sq-part SQR-SIZE 
+                                  (make-posn (x-offset x)
+                                             (y-offset y)) 
+                                  false)
+                    (create-row (- x 1) y))]))
 
 (check-expect (create-row 2 1)
               (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
@@ -245,18 +286,21 @@
         [else
          (cond [(and (equal? (x-offset x) (posn-x (sq-part-posn (first LOS))))
                      (equal? (y-offset y) (posn-y (sq-part-posn (first LOS)))))
-                (cons (make-sq-part SQR-SIZE (sq-part-posn (first LOS)) (not (sq-part-state (first LOS)))) (toggle-square x y (rest LOS)))]
+                (cons (make-sq-part SQR-SIZE
+                                    (sq-part-posn (first LOS))
+                                    (not (sq-part-state (first LOS))))
+                      (toggle-square x y (rest LOS)))]
                [else (cons (first LOS) (toggle-square x y (rest LOS)))])]))
 
 
 ; test constants
-(define LOB-EX (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
+(define LOB-EX (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                            (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                  (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))))
+                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0))
 
-(check-expect (toggle-square (- (x-offset 2) 1) (+ (y-offset 1) 1) LOB-EX)
+(check-expect (toggle-square (- (x-offset 2) 1) (+ (y-offset 1) 1) (world-boxes LOB-EX))
               (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
@@ -265,36 +309,73 @@
 
 ;;;;;
 ;
-;Mouse Handler
+; Mouse Handler
 ;
 ;;;;
+
 ; mouse handler handles mouse events.
 ; Depending on where the user clicked, toggles a square.
-(define (me-h LOS x y event)
-  (cond [(or (equal? event "button-down") (equal? event "drag"))
+; world number number string -> world
+(define (me-h w x y event)
+  (if (world-menu w)
+      (cond [(equal? event "button-down")
+             (make-world
+              (world-boxes w)
+              (world-time w)
+              false
+              (world-next-play-time w))]
+            [else w])
+      (cond [(equal? event "button-down")
          (cond
-           [(or (negative? (y-pt->y-gd y))
-                (negative? (x-pt->x-gd x))) LOS]
-           [else (toggle-square (x-pt->x-gd x) (y-pt->y-gd y) LOS)])]
-        [else LOS]))
+           [(or (or (negative? (y-pt->y-gd y)) (zero? (y-pt->y-gd y)))
+                (negative? (x-pt->x-gd x))) w]
+           [else (make-world
+                  (toggle-square (x-pt->x-gd x) (y-pt->y-gd y) (world-boxes w))
+                  (world-time w)
+                  (world-menu w)
+                  (world-next-play-time w))])]
+            [else w])))
 
 (check-expect (me-h LOB-EX (x-offset 1) (y-offset 2)  "button-down")
-              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
+              (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))))
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0))
 (check-expect (me-h LOB-EX (- (x-offset 2) 3) (+ (y-offset 1) 2) "button-down")
-              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) true)
+              (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) true)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))))
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0))
+
+;;;;;
+;
+; Key Handler
+;
+;;;;
+
+; world string -> world
+; detect key presses to allow user to return
+; to menu screen
+(define (ke-h w event)
+  (if (not (world-menu w))
+      (cond [(equal? event "escape")
+             (make-world (world-boxes w)
+                         (world-time w)
+                         true
+                         (world-next-play-time w))]
+            [(equal? event " ")
+             (make-world (create-grid SQRS SQRS empty) (world-time w) false (world-next-play-time w))]
+            [else w])
+      w))
+
 ;;;;;
 ;
 ; ON TICK
 ;
 ;;;;;
+
 (define (y-grid y)
   (* y (/ HEIGHT SQRS)))
 
@@ -307,7 +388,7 @@
 ; list-of-squares -> rsound
 ; to map each column with an rsound for the tick handler
 (define (tick-helper los)
-  (cond
+    (cond
     [(empty?) (silence 1)]
     [(= (posn-x (sq-part-posn (first los))) (x-grid 1)) row1sound]
     [(= (posn-x (sq-part-posn (first los))) (x-grid 2)) row2sound]
@@ -322,26 +403,79 @@
 ; define pstream
 (define ps (make-pstream))
 
+; world -> pstream
 ; list-of-squares -> pstream
-; queue a pstream depending on the time
-(define (tick-handler los)
-  (both (cond
-          [(empty? los) ps]
-          [(sq-part-state (first los)) (both (pstream-queue ps
-                                                            (mapRowtoSound (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
-                                                            (round (+ (* (/ (s MEASURE-LENGTH) SQRS)
-                                                                         (x-pt->x-gd (posn-x (sq-part-posn (first los)))))
-                                                                      (+ (pstream-current-frame ps) 2400))))
-                                             (tick-handler (rest los)))]
-          [else (tick-handler (rest los))])
-        los))
+; queue a pstream
+(define (queuer w)
+  (local
+    [(define current-time (+ (modulo (pstream-current-frame ps) (s MEASURE-LENGTH)) SOUND-BUFFER))
+    (define los (world-boxes w))]
+    (cond
+      [(empty? los) ps]
+      [(and (play-yet? current-time (x-pt->x-gd (posn-x (sq-part-posn (first los)))))
+            (sq-part-state (first los))) 
+       (both (pstream-queue ps
+                            (mapRowtoSound (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
+                            (round 
+                             (next-time-to-play (pstream-current-frame ps) 
+                                                (x-pt->x-gd (posn-x (sq-part-posn (first los)))))))
+             (queuer (make-world (rest los)
+                                 (world-time w)
+                                 (world-menu w)
+                                 (world-next-play-time w))))]
+      [else (queuer (make-world (rest los)
+                                (world-time w)
+                                (world-menu w)
+                                (world-next-play-time w)))])))
+   
+;; next-time-to-play given a box and the current time will determine the next time that box will play
+;; number number -> number
+(define (next-time-to-play now col)
+  (+ (* (floor (/ now (s MEASURE-LENGTH))) (s MEASURE-LENGTH))
+     (* col (s MEASURE-LENGTH) 1/8)
+     SOUND-BUFFER))
+
+; world -> world
+; change the time in the world
+(define (world-time-change w)
+  (make-world (world-boxes w)
+              (add1 (world-time w))
+              (world-menu w)
+              (+ (world-next-play-time w) (s (/ 1 28)))))
+
+; world frame -> boolean
+; tell if it is time to play or not
+(define (play-yet? curr-time col)
+  (and (> curr-time (* (/ (s MEASURE-LENGTH) SQRS) col))
+       (< curr-time (next-time-to-play (pstream-current-frame ps) col))))
+
+#;(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
+                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
+                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
+                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 20000 false 0) 22050) true)
+#;(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
+                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
+                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
+                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 3550 false 22050) 22050) false)
+
+; world -> world
+; queue a pstream depending on the time and update time of world
+(define (tick-handler w)
+  (if (world-menu w)
+      w
+      (both (queuer w)
+            (world-time-change w))))
 
 ;;;;;
 ;
-;BIG BANG
+; BIG BANG
 ;
 ;;;;;
-(big-bang (create-grid SQRS SQRS empty)
-          [to-draw sqr-placer]
+
+(big-bang (make-world (create-grid SQRS SQRS empty) 0 true 0)
+          [to-draw draw-world]
           [on-mouse me-h]
-          [on-tick tick-handler MEASURE-LENGTH])
+          [on-key ke-h]
+          [on-tick tick-handler])

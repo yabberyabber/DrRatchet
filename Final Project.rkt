@@ -1,10 +1,11 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
 #reader(lib "htdp-intermediate-reader.ss" "lang")((modname |Final Project|) (read-case-sensitive #t) (teachpacks ((lib "image.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp"))) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ((lib "image.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp")))))
+
 (require rsound)
 (require 2htdp/universe)
 (require 2htdp/image)
-;(require "get-file.rkt")
+(require "get-file.rkt")
 
 ;;;;;
 ;
@@ -23,7 +24,8 @@
 (define BUTTON-LIGHTGREEN (bitmap/file "./Light Green Button.png"))
 (define BUTTON-OFF (bitmap/file "./Off Button.png"))
 
-;(define USERSOUND (get-file))
+(define USERSOUND (rs-read (get-file)))
+
 ; World
 (define WIDTH 400)
 (define HEIGHT 400)
@@ -37,6 +39,7 @@
 (define MEASURE-LENGTH 3)
 (define SOUND-BUFFER (/ (* 44100 MEASURE-LENGTH) 28))
 (define BACKGROUND (bitmap/file "./Dr Ratchet Background.jpg"))
+(define INSTRUCTIONS (bitmap/file "./Dr Ratchet Instructions.jpg"))
 
 (define row1color "blue")
 (define row2color "red")
@@ -175,7 +178,7 @@
 (define-struct sq-part (len posn state))
 
 ; a world is (make-world sq-part number boolean)
-(define-struct world (boxes time menu next-play-time))
+(define-struct world (boxes time menu next-play-time sp-b))
 
 
 ; world -> world
@@ -220,10 +223,11 @@
                        (posn-y (sq-part-posn (first lod)))
                        (sqr-placer (rest lod)))]))
 
-(check-expect (draw-world (make-world (cons (make-sq-part 5
+#;(check-expect (draw-world (make-world (cons (make-sq-part 5
                                               (make-posn 10 20)
                                               true)
-                                empty) 0 false 0))
+                                empty) 0 false 0
+                                       true))
               (add-line (place-image BUTTON-GREEN
                            10 20
                               (place-image (text "Kick" 20 "YellowGreen") 425 25
@@ -246,7 +250,11 @@
 ; number number -> list-of-squares
 (define (create-row x y)
   (cond [(equal? x 0) empty]
-        [else (cons (make-sq-part SQR-SIZE (make-posn (x-offset x) (y-offset y)) false) (create-row (- x 1) y))]))
+        [else (cons (make-sq-part SQR-SIZE 
+                                  (make-posn (x-offset x)
+                                             (y-offset y)) 
+                                  false)
+                    (create-row (- x 1) y))]))
 
 (check-expect (create-row 2 1)
               (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
@@ -282,7 +290,10 @@
         [else
          (cond [(and (equal? (x-offset x) (posn-x (sq-part-posn (first LOS))))
                      (equal? (y-offset y) (posn-y (sq-part-posn (first LOS)))))
-                (cons (make-sq-part SQR-SIZE (sq-part-posn (first LOS)) (not (sq-part-state (first LOS)))) (toggle-square x y (rest LOS)))]
+                (cons (make-sq-part SQR-SIZE
+                                    (sq-part-posn (first LOS))
+                                    (not (sq-part-state (first LOS))))
+                      (toggle-square x y (rest LOS)))]
                [else (cons (first LOS) (toggle-square x y (rest LOS)))])]))
 
 
@@ -291,7 +302,7 @@
                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                            (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                  (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0))
+                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0 false))
 
 (check-expect (toggle-square (- (x-offset 2) 1) (+ (y-offset 1) 1) (world-boxes LOB-EX))
               (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
@@ -316,7 +327,8 @@
               (world-boxes w)
               (world-time w)
               false
-              (world-next-play-time w))]
+              (world-next-play-time w)
+              (world-sp-b w))]
             [else w])
       (cond [(equal? event "button-down")
          (cond
@@ -326,7 +338,8 @@
                   (toggle-square (x-pt->x-gd x) (y-pt->y-gd y) (world-boxes w))
                   (world-time w)
                   (world-menu w)
-                  (world-next-play-time w))])]
+                  (world-next-play-time w)
+                  (world-sp-b w))])]
             [else w])))
 
 (check-expect (me-h LOB-EX (x-offset 1) (y-offset 2)  "button-down")
@@ -334,19 +347,20 @@
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0))
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0 false))
 (check-expect (me-h LOB-EX (- (x-offset 2) 3) (+ (y-offset 1) 2) "button-down")
               (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) true)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0))
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0 false))
 
 ;;;;;
 ;
 ; Key Handler
 ;
 ;;;;
+
 
 ; world string -> world
 ; detect key presses to allow user to return
@@ -357,11 +371,28 @@
              (make-world (world-boxes w)
                          (world-time w)
                          true
-                         (world-next-play-time w))]
+                         (world-next-play-time w)
+                         (world-sp-b w))]
+            [(equal? event "return")
+             (make-world (create-grid SQRS SQRS empty) (world-time w) false (world-next-play-time w) (world-sp-b w))]
             [(equal? event " ")
-             (make-world (create-grid SQRS SQRS empty) (world-time w) false (world-next-play-time w))]
+             (if (and (world-sp-b w) (not (world-menu w)))
+                 (both (pstream-queue ps USERSOUND
+                                      (pstream-current-frame ps))
+                       (make-world (world-boxes w)
+                                   (world-time w)
+                                   (world-menu w)
+                                   (world-next-play-time w)
+                                   false))
+                 (make-world (world-boxes w)
+                             (world-time w)
+                             (world-menu w)
+                             (world-next-play-time w)
+                             (world-sp-b w)))]
             [else w])
       w))
+
+(check-expect (ke-h 
 
 ;;;;;
 ;
@@ -415,11 +446,13 @@
              (queuer (make-world (rest los)
                                  (world-time w)
                                  (world-menu w)
-                                 (world-next-play-time w))))]
+                                 (world-next-play-time w)
+                                 (world-sp-b w))))]
       [else (queuer (make-world (rest los)
                                 (world-time w)
                                 (world-menu w)
-                                (world-next-play-time w)))])))
+                                (world-next-play-time w)
+                                (world-sp-b w)))])))
    
 ;; next-time-to-play given a box and the current time will determine the next time that box will play
 ;; number number -> number
@@ -434,7 +467,8 @@
   (make-world (world-boxes w)
               (add1 (world-time w))
               (world-menu w)
-              (+ (world-next-play-time w) (s (/ 1 28)))))
+              (+ (world-next-play-time w) (s (/ 1 28)))
+              (world-sp-b w)))
 
 ; world frame -> boolean
 ; tell if it is time to play or not
@@ -446,12 +480,12 @@
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 20000 false 0) 22050) true)
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 20000 false 0 false) 22050) true)
 #;(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 3550 false 22050) 22050) false)
+                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 3550 false 22050 false) 22050) false)
 
 ; world -> world
 ; queue a pstream depending on the time and update time of world
@@ -467,7 +501,7 @@
 ;
 ;;;;;
 
-(big-bang (make-world (create-grid SQRS SQRS empty) 0 true 0)
+(big-bang (make-world (create-grid SQRS SQRS empty) 0 true 0 true)
           [to-draw draw-world]
           [on-mouse me-h]
           [on-key ke-h]
