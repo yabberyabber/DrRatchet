@@ -23,6 +23,7 @@
 (define BUTTON-LIGHTGREEN (bitmap/file "./Light Green Button.png"))
 (define BUTTON-OFF (bitmap/file "./Off Button.png"))
 
+; get-file
 (define USER-SELECTION (get-file))
 (define USERWAV (if (boolean? USER-SELECTION) (silence 1) (rs-scale 0.2 (rs-read USER-SELECTION))))
 
@@ -37,10 +38,15 @@
 (define SQR-SIZE (/ WIDTH 10))
 (define SQR-DIST (/ (image-height BUTTON-GREEN) 2))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
+<<<<<<< HEAD
 (define DEFAULT-TEMPO 128)   ;;in unit of bpm
+=======
+(define DEFAULT-TEMPO 120)   ;;in unit of bpm
+>>>>>>> 07988c339ebac21efccfbee02815b3de1f991a6c
 (define MINIMUM-TEMPO 60)
 (define MAXIMUM-TEMPO 240)
 (define DEFAULT-OFFSET 0)
+(define OFFSET-STEP (* 44100 1/28))
 (define (measure-length tempo) (/ 480 tempo))
 (define SOUND-BUFFER (/ (* 44100 (measure-length DEFAULT-TEMPO)) 28))
 (define BACKGROUND (bitmap/file "./Dr Ratchet Background.png"))
@@ -65,7 +71,7 @@
 ;
 ;;;;;
 
-; Frames to Seconds
+; Convert Frames to Seconds
 ; number -> number
 ; returns a time value in frames from a time value in seconds
 (define (s sec) (* 44100 sec))
@@ -91,7 +97,7 @@
 
 (check-expect (x-offset 2) (- (* 2 (/ HEIGHT SQRS)) X-PAD))
 
-; rowNumber-> rsound
+; number -> rsound
 ; Maps the row that a button is in
 ; to the sound file it is to play
 
@@ -110,7 +116,7 @@
 (check-expect (mapRowtoSound 1) row1sound)
 (check-expect (mapRowtoSound 0) NOSOUND)
 
-;rowNumber->sound
+; number -> sound
 ; Maps the row that a button is in
 ; to the color it should change to
 
@@ -187,20 +193,29 @@
                MT-SCN))
 
 
+; number number number -> number
+; change the x-position of the sliding line
+(define (line-posn t tempo offset)
+  (* (/ WIDTH (s (measure-length tempo)))
+                   (modulo (round (- (+ t offset) SOUND-BUFFER (/ (s (measure-length tempo)) SQRS)))
+                           (round (s (measure-length tempo))))))
+
+(check-expect (line-posn 21000 160 0) (* (/ WIDTH (s (measure-length 160)))
+                                         (modulo (round (- (+ 21000 0) SOUND-BUFFER (/ (s (measure-length 160)) SQRS)))
+                                                 (round (s (measure-length 160))))))
+
+; world -> image
+; draw the menu or the world
 (define (draw-world w)
   (local [(define cur-fr (pstream-current-frame ps))]
   (if (world-menu w)
       (draw-menu w)
       (add-line (sqr-placer  (world-boxes w))
-                (* (/ WIDTH (s (measure-length (world-tempo w)))) 
-                   (modulo (round (- (+ cur-fr (world-offset w)) SOUND-BUFFER (/ (s (measure-length (world-tempo w))) SQRS)))
-                           (round (s (measure-length (world-tempo w))))))
+                (line-posn (pstream-current-frame ps) (world-tempo w) (world-offset w))
                 0
-                (* (/ WIDTH (s (measure-length (world-tempo w)))) 
-                   (modulo (round (- (+ cur-fr (world-offset w)) SOUND-BUFFER (/ (s (measure-length (world-tempo w))) SQRS)))
-                           (round (s (measure-length (world-tempo w))))))
+                (line-posn (pstream-current-frame ps) (world-tempo w) (world-offset w))
             HEIGHT
-            "black"))))
+            "red"))))
 
 (check-expect (draw-world (make-world (cons (make-sq-part 5
                                               (make-posn 10 20)
@@ -209,15 +224,11 @@
               (add-line (place-image BUTTON-GREEN
                            10 20
                               (place-image BACKGROUND (/ W-WIDTH 2) (/ W-HEIGHT 2 ) MT-SCN))
-                        (* (/ WIDTH (s (measure-length DEFAULT-TEMPO))) 
-                   (modulo (round (- (+ (pstream-current-frame ps) DEFAULT-OFFSET) SOUND-BUFFER (/ (s (measure-length DEFAULT-TEMPO)) SQRS)))
-                           (round (s (measure-length DEFAULT-TEMPO)))))
+                        (line-posn (pstream-current-frame ps) 160 0)
                         0
-                        (* (/ WIDTH (s (measure-length DEFAULT-TEMPO))) 
-                   (modulo (round (- (+ (pstream-current-frame ps) DEFAULT-OFFSET) SOUND-BUFFER (/ (s (measure-length DEFAULT-TEMPO)) SQRS)))
-                           (round (s (measure-length DEFAULT-TEMPO)))))
+                        (line-posn (pstream-current-frame ps) 160 0)
                         HEIGHT
-                        "black"))
+                        "red"))
 
 ; a list-of-dims is one of:
 ; - empty, or
@@ -233,8 +244,6 @@
                        (posn-x (sq-part-posn (first lod)))
                        (posn-y (sq-part-posn (first lod)))
                        (sqr-placer (rest lod)))]))
-; a world is (make-world sq-part frames boolean frames number number boolean)
-;(define-struct world (boxes time menu next-play-time tempo offset sp-b))
 
 
 ; create-row takes an x and y and returns a list of 
@@ -258,11 +267,11 @@
 
 ; grid takes an x and y and returns a list of squares
 ; with y-posns ranging from 1 to y and x-posns ranging from 1 to x
-; number number -> list-of-squares
+; number number list-of-squares -> list-of-squares
 (define (create-grid x y LOB)
   (cond [(equal? y 0) LOB]
-        [else (create-grid x (- y 1) 
-                           (append LOB 
+        [else (create-grid x (- y 1)
+                           (append LOB
                                    (create-row x y)))]))
 
 (check-expect (create-grid 1 3 (create-row 2 1))
@@ -391,8 +400,10 @@
                                    (world-offset w)
                                    false))
                  w)]
-            [(equal? event "j") (world-decrement-tempo w)]
-            [(equal? event "k") (world-increment-tempo w)]
+            [(equal? event "up")    (world-increment-tempo w)]
+            [(equal? event "down")  (world-decrement-tempo w)]
+            [(equal? event "left")  (world-decrement-offset w)]
+            [(equal? event "right") (world-increment-offset w)]
             [else w])
       w))
 
@@ -408,7 +419,7 @@
               (world-offset w)
               (world-sp-b w)))
 
-;;function world-increment-tempo takes a world and returns the world with everything the same except with decreased tempo
+;;function world-decrement-tempo takes a world and returns the world with everything the same except with decreased tempo
 ;; world -> world
 (define (world-decrement-tempo w)
   (make-world (world-boxes w)
@@ -420,6 +431,28 @@
               (world-offset w)
               (world-sp-b w)))
 
+;;function world-increment-offset takes a world and returns it with incremented offset
+;; world -> world
+(define (world-increment-offset w)
+  (make-world (world-boxes w)
+              (world-time w)
+              (world-menu w)
+              (world-next-play-time w)
+              (world-tempo w)
+              (+ (world-offset w) OFFSET-STEP)
+              (world-sp-b w)))
+
+;;function world-decrement-offset takes a world and returns it with decremented offset
+;; world -> world
+(define (world-decrement-offset w)
+  (make-world (world-boxes w)
+              (world-time w)
+              (world-menu w)
+              (world-next-play-time w)
+              (world-tempo w)
+              (- (world-offset w) OFFSET-STEP)
+              (world-sp-b w)))
+
 
 ;;;;;
 ;
@@ -427,9 +460,13 @@
 ;
 ;;;;;
 
+; number -> number
+; determine the y-grid from a position
 (define (y-grid y)
   (* y (/ HEIGHT SQRS)))
 
+; number -> number
+; determine the x-grid from a position
 (define (x-grid x)
   (* x (/ WIDTH SQRS)))
 
