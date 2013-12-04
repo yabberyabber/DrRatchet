@@ -192,7 +192,7 @@
 ; number number number -> number
 ; change the x-position of the sliding line
 (define (line-posn t tempo offset)
-  (* (/ WIDTH (s (measure-length tempo))) 
+  (* (/ WIDTH (s (measure-length tempo)))
                    (modulo (round (- (+ t offset) SOUND-BUFFER (/ (s (measure-length tempo)) SQRS)))
                            (round (s (measure-length tempo))))))
 
