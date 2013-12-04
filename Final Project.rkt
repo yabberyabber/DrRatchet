@@ -4,6 +4,7 @@
 (require rsound)
 (require 2htdp/universe)
 (require 2htdp/image)
+(require "get-file.rkt")
 
 ;;;;;
 ;
@@ -56,16 +57,20 @@
                          (world-offset w)
                          (world-sp-b w))]
             [(equal? event " ")
-             (if (and (and (world-sp-b w) (> (rs-frames USERWAV) 5)) (not (world-menu w)))
-                 (both (pstream-queue ps USERWAV
-                                      (pstream-current-frame ps))
-                       (make-world (world-boxes w)
-                                   (world-time w)
-                                   (world-menu w)
-                                   (world-next-play-time w)
-                                   (world-tempo w)
-                                   (world-offset w)
-                                   false))
+             (if (and (world-sp-b w) (not (world-menu w)))
+                 (local
+                   [(define userfile (get-file))]
+                   (cond [(boolean? userfile) w]
+                         [else 
+                          (both (pstream-queue ps (rs-scale 0.2 (rs-read userfile))
+                                               (pstream-current-frame ps))
+                                (make-world (world-boxes w)
+                                            (world-time w)
+                                            (world-menu w)
+                                            (world-next-play-time w)
+                                            (world-tempo w)
+                                            (world-offset w)
+                                            false))]))
                  w)]
             [(equal? event "up")    (world-increment-tempo w)]
             [(equal? event "down")  (world-decrement-tempo w)]
