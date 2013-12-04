@@ -95,3 +95,6 @@
           [on-mouse me-h]
           [on-key ke-h]
           [on-tick tick-handler])
+
+; stop the music
+(stop)
