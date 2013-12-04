@@ -23,7 +23,7 @@
 ; change the x-position of the sliding line
 (define (line-posn t tempo offset)
   (* (/ WIDTH (s (measure-length tempo)))
-                   (modulo (round (- (+ t offset) SOUND-BUFFER (/ (s (measure-length tempo)) SQRS)))
+                   (modulo (round (- (- t offset) SOUND-BUFFER (/ (s (measure-length tempo)) SQRS)))
                            (round (s (measure-length tempo))))))
 
 (check-expect (line-posn 21000 160 0) (* (/ WIDTH (s (measure-length 160)))
@@ -37,7 +37,7 @@
   (if (world-menu w)
       (draw-menu w)
       (add-line (place-image (text (number->string (world-tempo w)) 28 "red") 150 485
-                (place-image (text (number->string (world-offset w)) 28 "red") 450 485
+                (place-image (text (number->string (/ (world-offset w) 44100)) 28 "red") 450 485
                 (sqr-placer  (world-boxes w))))
                 (line-posn (pstream-current-frame ps) (world-tempo w) (world-offset w))
                 0
