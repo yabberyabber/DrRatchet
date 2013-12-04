@@ -31,7 +31,7 @@
 (define WIDTH 400)
 (define HEIGHT 400)
 (define W-WIDTH 600)
-(define W-HEIGHT 450)
+(define W-HEIGHT 600)
 (define SQRS 8)
 (define MT-SCN (empty-scene W-WIDTH W-HEIGHT))
 (define SQR-SIZE (/ WIDTH 10))
