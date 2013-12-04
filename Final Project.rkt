@@ -43,8 +43,8 @@
 (define DEFAULT-OFFSET 0)
 (define (measure-length tempo) (/ 480 tempo))
 (define SOUND-BUFFER (/ (* 44100 (measure-length DEFAULT-TEMPO)) 28))
-(define BACKGROUND (bitmap/file "./Dr Ratchet Background.jpg"))
-(define INSTRUCTIONS (bitmap/file "./Dr Ratchet Instructions.jpg"))
+(define BACKGROUND (bitmap/file "./Dr Ratchet Background.png"))
+(define INSTRUCTIONS (bitmap/file "./Dr Ratchet Instructions.png"))
 
 
 ;Pstream
