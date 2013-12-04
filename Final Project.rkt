@@ -37,7 +37,7 @@
 (define SQR-SIZE (/ WIDTH 10))
 (define SQR-DIST (/ (image-height BUTTON-GREEN) 2))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
-(define DEFAULT-TEMPO 160)   ;;in unit of bpm
+(define DEFAULT-TEMPO 128)   ;;in unit of bpm
 (define MINIMUM-TEMPO 60)
 (define MAXIMUM-TEMPO 240)
 (define DEFAULT-OFFSET 0)
