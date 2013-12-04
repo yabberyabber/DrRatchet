@@ -1,7 +1,6 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
 #reader(lib "htdp-intermediate-reader.ss" "lang")((modname |Final Project|) (read-case-sensitive #t) (teachpacks ((lib "image.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp"))) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ((lib "image.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp")))))
-
 (require rsound)
 (require 2htdp/universe)
 (require 2htdp/image)
@@ -24,7 +23,9 @@
 (define BUTTON-LIGHTGREEN (bitmap/file "./Light Green Button.png"))
 (define BUTTON-OFF (bitmap/file "./Off Button.png"))
 
-(define USERSOUND (rs-read (get-file)))
+(define USER-SELECTION (get-file))
+(define USERWAV (if (boolean? USER-SELECTION) (silence 1) (rs-scale 0.2 (rs-read USER-SELECTION))))
+
 
 ; World
 (define WIDTH 400)
@@ -184,17 +185,12 @@
 (define-struct world (boxes time menu next-play-time tempo offset sp-b))
 
 
+; Menu Screen
 ; world -> world
 ; create the menu screen
 (define (draw-menu w)
-  (place-image (text "Dr. Ratchet's Music Maker" 45 "blue") 300 50
-  (place-image (text "Directions: Click any box to turn its sound on," 28 "black") 300 150            
-  (place-image (text "and again to turn its sound off. Sounds that are" 28 "black") 300 180 
-  (place-image (text "on will play when the time line crosses their" 28 "black") 300 210
-  (place-image (text "respective boxes." 28 "black") 300 240             
-  (place-image (text "Have fun and make some music!" 35 "blue") 300 340
-  (place-image (text "click to start" 28 "black") (/ W-WIDTH 2) 395
-               MT-SCN))))))))
+  (place-image INSTRUCTIONS (/ W-WIDTH 2) (/ W-HEIGHT 2)
+               MT-SCN))
 
 
 (define (draw-world w)
@@ -381,11 +377,17 @@
                          (world-tempo w)
                          (world-offset w)
                          (world-sp-b w))]
-            [(equal? event "return")
-             (make-world (create-grid SQRS SQRS empty) (world-time w) false (world-next-play-time w) (world-sp-b w))]
+            [(equal? event "\r")
+             (make-world (create-grid SQRS SQRS empty)
+                         (world-time w)
+                         false
+                         (world-next-play-time w)
+                         (world-tempo w)
+                         (world-offset w)
+                         (world-sp-b w))]
             [(equal? event " ")
-             (if (and (world-sp-b w) (not (world-menu w)))
-                 (both (pstream-queue ps USERSOUND
+             (if (and (and (world-sp-b w) (> (rs-frames USERWAV) 5)) (not (world-menu w)))
+                 (both (pstream-queue ps USERWAV
                                       (pstream-current-frame ps))
                        (make-world (world-boxes w)
                                    (world-time w)
