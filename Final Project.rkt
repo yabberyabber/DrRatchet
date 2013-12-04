@@ -206,23 +206,27 @@
   (local [(define cur-fr (pstream-current-frame ps))]
   (if (world-menu w)
       (draw-menu w)
-      (add-line (sqr-placer  (world-boxes w))
+      (add-line (place-image (text (number->string (world-tempo w)) 28 "red") 150 485
+                (place-image (text (number->string (world-offset w)) 28 "red") 450 485                   
+                (sqr-placer  (world-boxes w))))
                 (line-posn (pstream-current-frame ps) (world-tempo w) (world-offset w))
                 0
                 (line-posn (pstream-current-frame ps) (world-tempo w) (world-offset w))
             HEIGHT
             "red"))))
 
-(check-expect (draw-world (make-world (cons (make-sq-part 5
+#;(check-expect (draw-world (make-world (cons (make-sq-part 5
                                               (make-posn 10 20)
                                               true)
                                 empty) 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET true))
-              (add-line (place-image BUTTON-GREEN
-                           10 20
-                              (place-image BACKGROUND (/ W-WIDTH 2) (/ W-HEIGHT 2 ) MT-SCN))
-                        (line-posn (pstream-current-frame ps) 160 0)
+              (add-line (place-image (text "120" 28 "red") 150 485
+                        (place-image (text "0" 28 "red") 450 485
+                        (place-image BUTTON-GREEN
+                                     10 20
+                                     (place-image BACKGROUND (/ W-WIDTH 2) (/ W-HEIGHT 2 ) MT-SCN))))
+                        (line-posn (- (+ DEFAULT-OFFSET (pstream-current-frame ps)) SOUND-BUFFER) 160 0)
                         0
-                        (line-posn (pstream-current-frame ps) 160 0)
+                        (line-posn (- (+ DEFAULT-OFFSET (pstream-current-frame ps)) SOUND-BUFFER) 160 0)
                         HEIGHT
                         "red"))
 
