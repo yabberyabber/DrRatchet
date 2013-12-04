@@ -38,8 +38,8 @@
 (define X-PAD (/ WIDTH (* 2 SQRS)))
 (define DEFAULT-TEMPO 160)   ;;in unit of bpm
 (define DEFAULT-OFFSET 0)
-(define MEASURE-LENGTH 3)
-(define SOUND-BUFFER (/ (* 44100 MEASURE-LENGTH) 28))
+(define (measure-length tempo) (/ 480 tempo))
+(define SOUND-BUFFER (/ (* 44100 (measure-length DEFAULT-TEMPO)) 28))
 (define BACKGROUND (bitmap/file "./Dr Ratchet Background.jpg"))
 (define INSTRUCTIONS (bitmap/file "./Dr Ratchet Instructions.jpg"))
 
@@ -201,13 +201,13 @@
   (if (world-menu w)
       (draw-menu w)
       (add-line (sqr-placer  (world-boxes w))
-                (* (/ WIDTH (s MEASURE-LENGTH)) 
-                   (modulo (round (- (+ (pstream-current-frame ps) (world-offset w)) SOUND-BUFFER (/ (s MEASURE-LENGTH) SQRS)))
-                           (s MEASURE-LENGTH)))
+                (* (/ WIDTH (s (measure-length (world-tempo w)))) 
+                   (modulo (round (- (+ (pstream-current-frame ps) (world-offset w)) SOUND-BUFFER (/ (s (measure-length (world-tempo w))) SQRS)))
+                           (round (s (measure-length (world-tempo w))))))
                 0
-                (* (/ WIDTH (s MEASURE-LENGTH)) 
-                   (modulo (round (- (+ (pstream-current-frame ps) (world-offset w)) SOUND-BUFFER (/ (s MEASURE-LENGTH) SQRS)))
-                           (s MEASURE-LENGTH)))
+                (* (/ WIDTH (s (measure-length (world-tempo w)))) 
+                   (modulo (round (- (+ (pstream-current-frame ps) (world-offset w)) SOUND-BUFFER (/ (s (measure-length (world-tempo w))) SQRS)))
+                           (round (s (measure-length (world-tempo w))))))
             HEIGHT
             "black")))
 
@@ -401,8 +401,32 @@
                              (world-tempo w)
                              (world-offset w)
                              (world-sp-b w)))]
+            [(equal? event "j") (world-decrement-tempo w)]
+            [(equal? event "k") (world-increment-tempo w)]
             [else w])
       w))
+
+;;function world-increment-tempo takes a world and returns the world with everything the same except with increased tempo
+;; world -> world
+(define (world-increment-tempo w)
+  (make-world (world-boxes w)
+              (world-time w)
+              (world-menu w)
+              (world-next-play-time w)
+              (add1 (world-tempo w))
+              (world-offset w)
+              (world-sp-b w)))
+
+;;function world-increment-tempo takes a world and returns the world with everything the same except with decreased tempo
+;; world -> world
+(define (world-decrement-tempo w)
+  (make-world (world-boxes w)
+              (world-time w)
+              (world-menu w)
+              (world-next-play-time w)
+              (sub1 (world-tempo w))
+              (world-offset w)
+              (world-sp-b w)))
 
 
 ;;;;;
@@ -441,18 +465,19 @@
 ; queue a pstream
 (define (queuer w)
   (local
-    [(define current-time (+ (modulo (pstream-current-frame ps) (s MEASURE-LENGTH)) SOUND-BUFFER))
+    [(define current-time (+ (modulo (pstream-current-frame ps) (round (s (measure-length (world-tempo w))))) SOUND-BUFFER))
     (define los (world-boxes w))]
     (cond
       [(empty? los) ps]
-      [(and (play-yet? current-time (world-offset w) (x-pt->x-gd (posn-x (sq-part-posn (first los)))))
+      [(and (play-yet? current-time (world-offset w) (x-pt->x-gd (posn-x (sq-part-posn (first los)))) (world-tempo w))
             (sq-part-state (first los))) 
        (both (pstream-queue ps
                             (mapRowtoSound (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
                             (round 
                              (next-time-to-play (pstream-current-frame ps) 
                                                 (world-offset w)
-                                                (x-pt->x-gd (posn-x (sq-part-posn (first los)))))))
+                                                (x-pt->x-gd (posn-x (sq-part-posn (first los))))
+                                                (world-tempo w))))
              (queuer (make-world (rest los)
                                  (world-time w)
                                  (world-menu w)
@@ -473,9 +498,9 @@
 
 
 
-(define (next-time-to-play now offset col)
-  (+ (* (floor (/ now (s MEASURE-LENGTH))) (s MEASURE-LENGTH))
-     (* col (s MEASURE-LENGTH) 1/8)
+(define (next-time-to-play now offset col tempo)
+  (+ (* (floor (/ now (s (measure-length tempo)))) (s (measure-length tempo)))
+     (* col (s (measure-length tempo)) 1/8)
      SOUND-BUFFER
      offset))
 
@@ -492,9 +517,9 @@
 
 ; world frame -> boolean
 ; tell if it is time to play or not
-(define (play-yet? curr-time offset col)
-  (and (> curr-time (* (/ (s MEASURE-LENGTH) SQRS) col))
-       (< curr-time (next-time-to-play (pstream-current-frame ps) offset col))))
+(define (play-yet? curr-time offset col tempo)
+  (and (> curr-time (* (/ (s (measure-length tempo)) SQRS) col))
+       (< curr-time (next-time-to-play (pstream-current-frame ps) offset col tempo))))
 
 #;(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
