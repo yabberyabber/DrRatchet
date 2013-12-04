@@ -31,7 +31,7 @@
 (define WIDTH 400)
 (define HEIGHT 400)
 (define W-WIDTH 600)
-(define W-HEIGHT 450)
+(define W-HEIGHT 600)
 (define SQRS 8)
 (define MT-SCN (empty-scene W-WIDTH W-HEIGHT))
 (define SQR-SIZE (/ WIDTH 10))
@@ -44,8 +44,8 @@
 (define OFFSET-STEP (* 44100 1/28))
 (define (measure-length tempo) (/ 480 tempo))
 (define SOUND-BUFFER (/ (* 44100 (measure-length DEFAULT-TEMPO)) 28))
-(define BACKGROUND (bitmap/file "./Dr Ratchet Background.jpg"))
-(define INSTRUCTIONS (bitmap/file "./Dr Ratchet Instructions.jpg"))
+(define BACKGROUND (bitmap/file "./Dr Ratchet Background.png"))
+(define INSTRUCTIONS (bitmap/file "./Dr Ratchet Instructions.png"))
 
 
 ;Pstream
