@@ -25,47 +25,7 @@
 ;
 ;;;;
 
-; mouse handler handles mouse events.
-; Depending on where the user clicked, toggles a square.
-; world number number string -> world
-(define (me-h w x y event)
-  (if (world-menu w)
-      (cond [(equal? event "button-down")
-             (make-world
-              (world-boxes w)
-              (world-time w)
-              false
-              (world-next-play-time w)
-              (world-tempo w)
-              (world-offset w)
-              (world-sp-b w))]
-            [else w])
-      (cond [(equal? event "button-down")
-         (cond
-           [(or (or (negative? (y-pt->y-gd y)) (zero? (y-pt->y-gd y)))
-                (negative? (x-pt->x-gd x))) w]
-           [else (make-world
-                  (toggle-square (x-pt->x-gd x) (y-pt->y-gd y) (world-boxes w))
-                  (world-time w)
-                  (world-menu w)
-                  (world-next-play-time w)
-                  (world-tempo w)
-                  (world-offset w)
-                  (world-sp-b w))])]
-            [else w])))
-
-(check-expect (me-h (make-world LOB 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET false) (x-offset 1) (y-offset 2)  "button-down")
-              (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
-                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
-                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
-                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET false))
-(check-expect (me-h (make-world LOB 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET false) (- (x-offset 2) 3) (+ (y-offset 1) 2) "button-down")
-              (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) true)
-                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
-                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
-                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET false))
+(require "mouse-handling.rkt")
 
 ;;;;;
 ;
