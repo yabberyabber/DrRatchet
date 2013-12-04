@@ -44,14 +44,6 @@
 (define BACKGROUND (bitmap/file "./Dr Ratchet Background.jpg"))
 (define INSTRUCTIONS (bitmap/file "./Dr Ratchet Instructions.jpg"))
 
-(define row1color "blue")
-(define row2color "red")
-(define row3color "black")
-(define row4color "violet")
-(define row5color "lightblue")
-(define row6color "darkblue")
-(define row7color "lime")
-(define row8color "yellow")
 
 ;Pstream
 (define NOSOUND (silence 1))
@@ -181,7 +173,7 @@
 ; -sq-part-state
 (define-struct sq-part (len posn state))
 
-; a world is (make-world sq-part number boolean)
+; a world is (make-world sq-part frames boolean frames number number boolean)
 (define-struct world (boxes time menu next-play-time tempo offset sp-b))
 
 
@@ -194,18 +186,36 @@
 
 
 (define (draw-world w)
+  (local [(define cur-fr (pstream-current-frame ps))]
   (if (world-menu w)
       (draw-menu w)
       (add-line (sqr-placer  (world-boxes w))
                 (* (/ WIDTH (s (measure-length (world-tempo w)))) 
-                   (modulo (round (- (+ (pstream-current-frame ps) (world-offset w)) SOUND-BUFFER (/ (s (measure-length (world-tempo w))) SQRS)))
+                   (modulo (round (- (+ cur-fr (world-offset w)) SOUND-BUFFER (/ (s (measure-length (world-tempo w))) SQRS)))
                            (round (s (measure-length (world-tempo w))))))
                 0
                 (* (/ WIDTH (s (measure-length (world-tempo w)))) 
-                   (modulo (round (- (+ (pstream-current-frame ps) (world-offset w)) SOUND-BUFFER (/ (s (measure-length (world-tempo w))) SQRS)))
+                   (modulo (round (- (+ cur-fr (world-offset w)) SOUND-BUFFER (/ (s (measure-length (world-tempo w))) SQRS)))
                            (round (s (measure-length (world-tempo w))))))
             HEIGHT
-            "black")))
+            "black"))))
+
+(check-expect (draw-world (make-world (cons (make-sq-part 5
+                                              (make-posn 10 20)
+                                              true)
+                                empty) 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET true))
+              (add-line (place-image BUTTON-GREEN
+                           10 20
+                              (place-image BACKGROUND (/ W-WIDTH 2) (/ W-HEIGHT 2 ) MT-SCN))
+                        (* (/ WIDTH (s (measure-length DEFAULT-TEMPO))) 
+                   (modulo (round (- (+ (pstream-current-frame ps) DEFAULT-OFFSET) SOUND-BUFFER (/ (s (measure-length DEFAULT-TEMPO)) SQRS)))
+                           (round (s (measure-length DEFAULT-TEMPO)))))
+                        0
+                        (* (/ WIDTH (s (measure-length DEFAULT-TEMPO))) 
+                   (modulo (round (- (+ (pstream-current-frame ps) DEFAULT-OFFSET) SOUND-BUFFER (/ (s (measure-length DEFAULT-TEMPO)) SQRS)))
+                           (round (s (measure-length DEFAULT-TEMPO)))))
+                        HEIGHT
+                        "black"))
 
 ; a list-of-dims is one of:
 ; - empty, or
@@ -221,26 +231,8 @@
                        (posn-x (sq-part-posn (first lod)))
                        (posn-y (sq-part-posn (first lod)))
                        (sqr-placer (rest lod)))]))
-
-#;(check-expect (draw-world (make-world (cons (make-sq-part 5
-                                              (make-posn 10 20)
-                                              true)
-                                empty) 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET true))
-              (add-line (place-image BUTTON-GREEN
-                           10 20
-                              (place-image (text "Kick" 20 "YellowGreen") 425 25
-          (place-image (text "Bass Drum" 19 "RoyalBlue") 455 75             
-          (place-image (text "Bass Drum Synth" 18 "Yellow") 475 125
-          (place-image (text "Snare" 19 "Brown") 430 175
-          (place-image (text "Clap" 20 "lightblue") 425 225
-          (place-image (text "Clash Cymbal" 18 "Red")  460 275  
-          (place-image (text "Closed Hi Hat" 18 "lime") 460 325
-          (place-image (text "Open Hi Hat" 18 "HotPink") 455 375 MT-SCN)))))))))
-                        (* (/ WIDTH (* 3 28)) (modulo (- 0 (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) (* MEASURE-LENGTH 28)))
-                        0
-                        (* (/ WIDTH (* 3 28)) (modulo (- 0 (round (* SOUND-BUFFER (/ (* MEASURE-LENGTH 28) 44100)))) (* MEASURE-LENGTH 28)))
-                        HEIGHT
-                        "black"))
+; a world is (make-world sq-part frames boolean frames number number boolean)
+;(define-struct world (boxes time menu next-play-time tempo offset sp-b))
 
 
 ; create-row takes an x and y and returns a list of 
@@ -523,16 +515,8 @@
   (and (> curr-time (* (/ (s (measure-length tempo)) SQRS) col))
        (< curr-time (next-time-to-play (pstream-current-frame ps) offset col tempo))))
 
-#;(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
-                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
-                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
-                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 20000 false 0 false) 22050) true)
-#;(check-expect (play-yet? (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
-                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
-                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
-                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 3550 false 22050 false) 22050) false)
+(check-expect (play-yet? 22050 20000 0 160) true)
+(check-expect (play-yet? 22050 2100 250 180) false)
 
 ; world -> world
 ; queue a pstream depending on the time and update time of world
