@@ -67,7 +67,7 @@
 ;
 ;;;;;
 
-; Frames to Seconds
+; Convert Frames to Seconds
 ; number -> number
 ; returns a time value in frames from a time value in seconds
 (define (s sec) (* 44100 sec))
@@ -93,7 +93,7 @@
 
 (check-expect (x-offset 2) (- (* 2 (/ HEIGHT SQRS)) X-PAD))
 
-; rowNumber-> rsound
+; number -> rsound
 ; Maps the row that a button is in
 ; to the sound file it is to play
 
@@ -112,7 +112,7 @@
 (check-expect (mapRowtoSound 1) row1sound)
 (check-expect (mapRowtoSound 0) NOSOUND)
 
-;rowNumber->sound
+; number -> sound
 ; Maps the row that a button is in
 ; to the color it should change to
 
@@ -200,6 +200,8 @@
                                          (modulo (round (- (+ 21000 0) SOUND-BUFFER (/ (s (measure-length 160)) SQRS)))
                                                  (round (s (measure-length 160))))))
 
+; world -> image
+; draw the menu or the world
 (define (draw-world w)
   (local [(define cur-fr (pstream-current-frame ps))]
   (if (world-menu w)
@@ -238,8 +240,6 @@
                        (posn-x (sq-part-posn (first lod)))
                        (posn-y (sq-part-posn (first lod)))
                        (sqr-placer (rest lod)))]))
-; a world is (make-world sq-part frames boolean frames number number boolean)
-;(define-struct world (boxes time menu next-play-time tempo offset sp-b))
 
 
 ; create-row takes an x and y and returns a list of 
@@ -263,11 +263,11 @@
 
 ; grid takes an x and y and returns a list of squares
 ; with y-posns ranging from 1 to y and x-posns ranging from 1 to x
-; number number -> list-of-squares
+; number number list-of-squares -> list-of-squares
 (define (create-grid x y LOB)
   (cond [(equal? y 0) LOB]
-        [else (create-grid x (- y 1) 
-                           (append LOB 
+        [else (create-grid x (- y 1)
+                           (append LOB
                                    (create-row x y)))]))
 
 (check-expect (create-grid 1 3 (create-row 2 1))
@@ -456,9 +456,13 @@
 ;
 ;;;;;
 
+; number -> number
+; determine the y-grid from a position
 (define (y-grid y)
   (* y (/ HEIGHT SQRS)))
 
+; number -> number
+; determine the x-grid from a position
 (define (x-grid x)
   (* x (/ WIDTH SQRS)))
 
