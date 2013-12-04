@@ -38,6 +38,8 @@
 (define SQR-DIST (/ (image-height BUTTON-GREEN) 2))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
 (define DEFAULT-TEMPO 160)   ;;in unit of bpm
+(define MINIMUM-TEMPO 60)
+(define MAXIMUM-TEMPO 240)
 (define DEFAULT-OFFSET 0)
 (define (measure-length tempo) (/ 480 tempo))
 (define SOUND-BUFFER (/ (* 44100 (measure-length DEFAULT-TEMPO)) 28))
@@ -396,13 +398,7 @@
                                    (world-tempo w)
                                    (world-offset w)
                                    false))
-                 (make-world (world-boxes w)
-                             (world-time w)
-                             (world-menu w)
-                             (world-next-play-time w)
-                             (world-tempo w)
-                             (world-offset w)
-                             (world-sp-b w)))]
+                 w)]
             [(equal? event "j") (world-decrement-tempo w)]
             [(equal? event "k") (world-increment-tempo w)]
             [else w])
@@ -415,7 +411,8 @@
               (world-time w)
               (world-menu w)
               (world-next-play-time w)
-              (add1 (world-tempo w))
+              (min MAXIMUM-TEMPO
+                   (add1 (world-tempo w)))
               (world-offset w)
               (world-sp-b w)))
 
@@ -426,7 +423,8 @@
               (world-time w)
               (world-menu w)
               (world-next-play-time w)
-              (sub1 (world-tempo w))
+              (max MINIMUM-TEMPO 
+                   (sub1 (world-tempo w)))
               (world-offset w)
               (world-sp-b w)))
 
