@@ -188,20 +188,27 @@
                MT-SCN))
 
 
+; number number number -> number
+; change the x-position of the sliding line
+(define (line-posn t tempo offset)
+  (* (/ WIDTH (s (measure-length tempo))) 
+                   (modulo (round (- (+ t offset) SOUND-BUFFER (/ (s (measure-length tempo)) SQRS)))
+                           (round (s (measure-length tempo))))))
+
+(check-expect (line-posn 21000 160 0) (* (/ WIDTH (s (measure-length 160)))
+                                         (modulo (round (- (+ 21000 0) SOUND-BUFFER (/ (s (measure-length 160)) SQRS)))
+                                                 (round (s (measure-length 160))))))
+
 (define (draw-world w)
   (local [(define cur-fr (pstream-current-frame ps))]
   (if (world-menu w)
       (draw-menu w)
       (add-line (sqr-placer  (world-boxes w))
-                (* (/ WIDTH (s (measure-length (world-tempo w)))) 
-                   (modulo (round (- (+ cur-fr (world-offset w)) SOUND-BUFFER (/ (s (measure-length (world-tempo w))) SQRS)))
-                           (round (s (measure-length (world-tempo w))))))
+                (line-posn (pstream-current-frame ps) (world-tempo w) (world-offset w))
                 0
-                (* (/ WIDTH (s (measure-length (world-tempo w)))) 
-                   (modulo (round (- (+ cur-fr (world-offset w)) SOUND-BUFFER (/ (s (measure-length (world-tempo w))) SQRS)))
-                           (round (s (measure-length (world-tempo w))))))
+                (line-posn (pstream-current-frame ps) (world-tempo w) (world-offset w))
             HEIGHT
-            "black"))))
+            "red"))))
 
 (check-expect (draw-world (make-world (cons (make-sq-part 5
                                               (make-posn 10 20)
@@ -210,15 +217,11 @@
               (add-line (place-image BUTTON-GREEN
                            10 20
                               (place-image BACKGROUND (/ W-WIDTH 2) (/ W-HEIGHT 2 ) MT-SCN))
-                        (* (/ WIDTH (s (measure-length DEFAULT-TEMPO))) 
-                   (modulo (round (- (+ (pstream-current-frame ps) DEFAULT-OFFSET) SOUND-BUFFER (/ (s (measure-length DEFAULT-TEMPO)) SQRS)))
-                           (round (s (measure-length DEFAULT-TEMPO)))))
+                        (line-posn (pstream-current-frame ps) 160 0)
                         0
-                        (* (/ WIDTH (s (measure-length DEFAULT-TEMPO))) 
-                   (modulo (round (- (+ (pstream-current-frame ps) DEFAULT-OFFSET) SOUND-BUFFER (/ (s (measure-length DEFAULT-TEMPO)) SQRS)))
-                           (round (s (measure-length DEFAULT-TEMPO)))))
+                        (line-posn (pstream-current-frame ps) 160 0)
                         HEIGHT
-                        "black"))
+                        "red"))
 
 ; a list-of-dims is one of:
 ; - empty, or
