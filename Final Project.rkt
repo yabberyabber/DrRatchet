@@ -38,6 +38,8 @@
 (define SQR-DIST (/ (image-height BUTTON-GREEN) 2))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
 (define DEFAULT-TEMPO 160)   ;;in unit of bpm
+(define MINIMUM-TEMPO 60)
+(define MAXIMUM-TEMPO 240)
 (define DEFAULT-OFFSET 0)
 (define (measure-length tempo) (/ 480 tempo))
 (define SOUND-BUFFER (/ (* 44100 (measure-length DEFAULT-TEMPO)) 28))
@@ -388,13 +390,7 @@
                                    (world-tempo w)
                                    (world-offset w)
                                    false))
-                 (make-world (world-boxes w)
-                             (world-time w)
-                             (world-menu w)
-                             (world-next-play-time w)
-                             (world-tempo w)
-                             (world-offset w)
-                             (world-sp-b w)))]
+                 w)]
             [(equal? event "j") (world-decrement-tempo w)]
             [(equal? event "k") (world-increment-tempo w)]
             [else w])
@@ -407,7 +403,8 @@
               (world-time w)
               (world-menu w)
               (world-next-play-time w)
-              (add1 (world-tempo w))
+              (min MAXIMUM-TEMPO
+                   (add1 (world-tempo w)))
               (world-offset w)
               (world-sp-b w)))
 
@@ -418,7 +415,8 @@
               (world-time w)
               (world-menu w)
               (world-next-play-time w)
-              (sub1 (world-tempo w))
+              (max MINIMUM-TEMPO 
+                   (sub1 (world-tempo w)))
               (world-offset w)
               (world-sp-b w)))
 
@@ -454,44 +452,27 @@
     [else (silence 1)]))
 
 
-; world -> pstream
-; list-of-squares -> pstream
-; queue a pstream
-(define (queuer w)
+; list-of-squares number tempo -> pstream
+; given a list of boxes, a play offset, and a tempo, queues the upcomming active boxes
+(define (queuer los offset tempo)
   (local
-    [(define current-time (+ (modulo (pstream-current-frame ps) (round (s (measure-length (world-tempo w))))) SOUND-BUFFER))
-    (define los (world-boxes w))]
+    [(define current-time (+ (modulo (pstream-current-frame ps) (round (s (measure-length tempo)))) SOUND-BUFFER))]
     (cond
       [(empty? los) ps]
-      [(and (play-yet? current-time (world-offset w) (x-pt->x-gd (posn-x (sq-part-posn (first los)))) (world-tempo w))
+      [(and (play-yet? current-time offset (x-pt->x-gd (posn-x (sq-part-posn (first los)))) tempo)
             (sq-part-state (first los))) 
-       (both (pstream-queue ps
-                            (mapRowtoSound (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
-                            (round 
-                             (next-time-to-play (pstream-current-frame ps) 
-                                                (world-offset w)
-                                                (x-pt->x-gd (posn-x (sq-part-posn (first los))))
-                                                (world-tempo w))))
-             (queuer (make-world (rest los)
-                                 (world-time w)
-                                 (world-menu w)
-                                 (world-next-play-time w)
-                                 (world-tempo w)
-                                 (world-offset w)
-                                 (world-sp-b w))))]
-      [else (queuer (make-world (rest los)
-                                (world-time w)
-                                (world-menu w)
-                                (world-next-play-time w)
-                                (world-tempo w)
-                                (world-offset w)
-                                (world-sp-b w)))])))
+       (pstream-queue (queuer (rest los) offset tempo)
+                      (mapRowtoSound (y-pt->y-gd (posn-y (sq-part-posn (first los)))))
+                      (round 
+                       (next-time-to-play 
+                        (pstream-current-frame ps) 
+                        offset
+                        (x-pt->x-gd (posn-x (sq-part-posn (first los))))
+                        tempo)))]
+      [else (queuer (rest los) offset tempo)])))
    
 ;; next-time-to-play given a box and the current time will determine the next time that box will play
 ;; number number -> number
-
-
-
 (define (next-time-to-play now offset col tempo)
   (+ (* (floor (/ now (s (measure-length tempo)))) (s (measure-length tempo)))
      (* col (s (measure-length tempo)) 1/8)
@@ -523,7 +504,7 @@
 (define (tick-handler w)
   (if (world-menu w)
       w
-      (both (queuer w)
+      (both (queuer (world-boxes w) (world-offset w) (world-tempo w))
             (world-time-change w))))
 
 ;;;;;
