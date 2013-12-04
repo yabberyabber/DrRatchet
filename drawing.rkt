@@ -7,6 +7,7 @@
 (require 2htdp/image)
 (require "constants.rkt")
 (require "world.rkt")
+(require "grid-tools.rkt")
 
 (provide (all-defined-out))
 

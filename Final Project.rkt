@@ -17,72 +17,7 @@
 
 (require "drawing.rkt")
 
-
-; create-row takes an x and y and returns a list of 
-; squares all with y-posn y and with x-posns ranging from 1 to x
-; number number -> list-of-squares
-(define (create-row x y)
-  (cond [(equal? x 0) empty]
-        [else (cons (make-sq-part SQR-SIZE 
-                                  (make-posn (x-offset x)
-                                             (y-offset y)) 
-                                  false)
-                    (create-row (- x 1) y))]))
-
-(check-expect (create-row 2 1)
-              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
-                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty)))
-(check-expect (create-row 3 2)
-              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 3) (y-offset 2)) false)
-                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 2)) false)
-                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false) empty))))
-
-; grid takes an x and y and returns a list of squares
-; with y-posns ranging from 1 to y and x-posns ranging from 1 to x
-; number number list-of-squares -> list-of-squares
-(define (create-grid x y LOB)
-  (cond [(equal? y 0) LOB]
-        [else (create-grid x (- y 1)
-                           (append LOB
-                                   (create-row x y)))]))
-
-(check-expect (create-grid 1 3 (create-row 2 1))
-              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
-                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
-                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
-                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))))
-
-
-; toggle-square takes an x and a y and
-; a list-of-squares and returns the list of squares with
-; the square at position x and y with the state flipped
-; number number list-of-squares -> list-of-squares
-(define (toggle-square x y LOS)
-  (cond [(empty? LOS) empty]
-        [else
-         (cond [(and (equal? (x-offset x) (posn-x (sq-part-posn (first LOS))))
-                     (equal? (y-offset y) (posn-y (sq-part-posn (first LOS)))))
-                (cons (make-sq-part SQR-SIZE
-                                    (sq-part-posn (first LOS))
-                                    (not (sq-part-state (first LOS))))
-                      (toggle-square x y (rest LOS)))]
-               [else (cons (first LOS) (toggle-square x y (rest LOS)))])]))
-
-
-; test constants
-(define LOB-EX (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
-                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
-                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
-                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET false))
-
-(check-expect (toggle-square (- (x-offset 2) 1) (+ (y-offset 1) 1) (world-boxes LOB-EX))
-              (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
-                    (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
-                          (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
-                                (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                                      (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))))
+(require "grid-tools.rkt")
 
 ;;;;;
 ;
@@ -119,13 +54,13 @@
                   (world-sp-b w))])]
             [else w])))
 
-(check-expect (me-h LOB-EX (x-offset 1) (y-offset 2)  "button-down")
+(check-expect (me-h (make-world LOB 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET false) (x-offset 1) (y-offset 2)  "button-down")
               (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
                                 (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) true)
                                       (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false) empty))))) 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET false))
-(check-expect (me-h LOB-EX (- (x-offset 2) 3) (+ (y-offset 1) 2) "button-down")
+(check-expect (me-h (make-world LOB 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET false) (- (x-offset 2) 3) (+ (y-offset 1) 2) "button-down")
               (make-world (cons (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) true)
                     (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)
                           (cons (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 3)) false)
@@ -185,16 +120,6 @@
 ; ON TICK
 ;
 ;;;;;
-
-; number -> number
-; determine the y-grid from a position
-(define (y-grid y)
-  (* y (/ HEIGHT SQRS)))
-
-; number -> number
-; determine the x-grid from a position
-(define (x-grid x)
-  (* x (/ WIDTH SQRS)))
 
 (require "sounding.rkt")
 

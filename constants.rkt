@@ -67,12 +67,6 @@
 (check-expect (s 0) 0)
 (check-expect (s 1) 44100)
 
-; a sq-part is (make-sq-part number posn boolean)
-; -sq-part-len
-; -sq-part-posn
-; -sq-part-state
-(define-struct sq-part (len posn state))
-
 
 
 ;Y Offset for Squares
@@ -128,3 +122,13 @@
 
 (check-expect (x-pt->x-gd 323) 7)
 (check-expect (x-pt->x-gd 4) -1)
+
+
+
+
+
+; a sq-part is (make-sq-part number posn boolean)
+; -sq-part-len
+; -sq-part-posn
+; -sq-part-state
+(define-struct sq-part (len posn state))
