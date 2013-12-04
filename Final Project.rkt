@@ -38,10 +38,11 @@
 (define SQR-SIZE (/ WIDTH 10))
 (define SQR-DIST (/ (image-height BUTTON-GREEN) 2))
 (define X-PAD (/ WIDTH (* 2 SQRS)))
-(define DEFAULT-TEMPO 160)   ;;in unit of bpm
+(define DEFAULT-TEMPO 120)   ;;in unit of bpm
 (define MINIMUM-TEMPO 60)
 (define MAXIMUM-TEMPO 240)
 (define DEFAULT-OFFSET 0)
+(define OFFSET-STEP (* 44100 1/28))
 (define (measure-length tempo) (/ 480 tempo))
 (define SOUND-BUFFER (/ (* 44100 (measure-length DEFAULT-TEMPO)) 28))
 (define BACKGROUND (bitmap/file "./Dr Ratchet Background.png"))
@@ -395,8 +396,10 @@
                                    (world-offset w)
                                    false))
                  w)]
-            [(equal? event "j") (world-decrement-tempo w)]
-            [(equal? event "k") (world-increment-tempo w)]
+            [(equal? event "up")    (world-increment-tempo w)]
+            [(equal? event "down")  (world-decrement-tempo w)]
+            [(equal? event "left")  (world-decrement-offset w)]
+            [(equal? event "right") (world-increment-offset w)]
             [else w])
       w))
 
@@ -412,7 +415,7 @@
               (world-offset w)
               (world-sp-b w)))
 
-;;function world-increment-tempo takes a world and returns the world with everything the same except with decreased tempo
+;;function world-decrement-tempo takes a world and returns the world with everything the same except with decreased tempo
 ;; world -> world
 (define (world-decrement-tempo w)
   (make-world (world-boxes w)
@@ -422,6 +425,28 @@
               (max MINIMUM-TEMPO 
                    (sub1 (world-tempo w)))
               (world-offset w)
+              (world-sp-b w)))
+
+;;function world-increment-offset takes a world and returns it with incremented offset
+;; world -> world
+(define (world-increment-offset w)
+  (make-world (world-boxes w)
+              (world-time w)
+              (world-menu w)
+              (world-next-play-time w)
+              (world-tempo w)
+              (+ (world-offset w) OFFSET-STEP)
+              (world-sp-b w)))
+
+;;function world-decrement-offset takes a world and returns it with decremented offset
+;; world -> world
+(define (world-decrement-offset w)
+  (make-world (world-boxes w)
+              (world-time w)
+              (world-menu w)
+              (world-next-play-time w)
+              (world-tempo w)
+              (- (world-offset w) OFFSET-STEP)
               (world-sp-b w)))
 
 
