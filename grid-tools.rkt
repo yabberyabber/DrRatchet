@@ -7,7 +7,6 @@
 (require "constants.rkt")
 (provide create-grid)
 (provide toggle-square)
-(provide LOB)
 
 
 ; create-row takes an x and y and returns a list of 
@@ -44,9 +43,9 @@
                     (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)))
 
 
-; toggle-square takes an x and a y and
+; toggle-square takes an x and a y (in grid units) and
 ; a list-of-squares and returns the list of squares with
-; the square at position x and y with the state flipped
+; the square at grid position x and y with the state flipped
 ; number number list-of-squares -> list-of-squares
 (define (toggle-square x y LOS)
   (cond [(empty? LOS) empty]
@@ -59,12 +58,13 @@
                       (toggle-square x y (rest LOS)))]
                [else (cons (first LOS) (toggle-square x y (rest LOS)))])]))
 
-
-; test constants
-(define LOB (create-grid 2 2 empty))
-
-(check-expect (toggle-square (- (x-offset 2) 1) (+ (y-offset 1) 1) LOB)
+; Check that it toggles a square if the mouse clicks one
+(check-expect (toggle-square 2 1 (create-grid 2 2 empty))
               (list (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 2)) false)
                     (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 2)) false)
-                    (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) false)
+                    (make-sq-part SQR-SIZE (make-posn (x-offset 2) (y-offset 1)) true)
                     (make-sq-part SQR-SIZE (make-posn (x-offset 1) (y-offset 1)) false)))
+
+; Check that it does not toggle any squares if the mouse misses
+(check-expect (toggle-square -1 18 (create-grid 2 2 empty))
+              (create-grid 2 2 empty))
