@@ -6,7 +6,7 @@
 (require "world.rkt")
 (require "grid-tools.rkt")
 
-(provide (all-defined-out))
+(provide me-h)
 
 
 ; mouse handler handles mouse events.

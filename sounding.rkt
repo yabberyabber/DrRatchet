@@ -6,10 +6,8 @@
 (require "constants.rkt")
 (require "world.rkt")
 
-(provide (all-defined-out))
+(provide tick-handler)
 
-(define (both a b)
-  b)
 
 ; number -> rsound
 ; Maps the row that a button is in

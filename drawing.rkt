@@ -9,7 +9,14 @@
 (require "world.rkt")
 (require "grid-tools.rkt")
 
-(provide (all-defined-out))
+(provide draw)
+
+; world -> image
+; calls either draw-menu or draw-world depending on what state the world is in
+(define (draw w)
+  (if (world-menu w)
+      (draw-menu w)
+      (draw-world w (pstream-current-frame ps))))
 
 ; Menu Screen
 ; world -> world
@@ -17,6 +24,30 @@
 (define (draw-menu w)
   (place-image INSTRUCTIONS (/ W-WIDTH 2) (/ W-HEIGHT 2)
                MT-SCN))
+
+; world number -> image
+; Draw the world
+(define (draw-world w current-frame)
+  (add-line (place-image (text (number->string (world-tempo w)) 28 "red") 150 485
+                         (place-image (text (number->string (/ (world-offset w) 44100)) 28 "red") 450 485
+                                      (sqr-placer  (world-boxes w))))
+            (line-posn current-frame (world-tempo w) (world-offset w))
+            0
+            (line-posn current-frame (world-tempo w) (world-offset w))
+            HEIGHT
+            "red"))
+
+(check-expect (draw-world (make-world (list (make-sq-part 5 (make-posn 10 20) true)) 
+                                      0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET true) 
+                          18)
+              (add-line (place-image (text "128" 28 "red") 150 485
+                                     (place-image (text "0" 28 "red") 450 485
+                                                  (sqr-placer (list (make-sq-part 5 (make-posn 10 20) true)))))
+                        (line-posn 18 DEFAULT-TEMPO DEFAULT-OFFSET)
+                        0
+                        (line-posn 18 DEFAULT-TEMPO DEFAULT-OFFSET)
+                        HEIGHT
+                        "red"))
 
 
 ; number number number -> number
@@ -29,36 +60,6 @@
 (check-expect (line-posn 21000 160 0) (* (/ WIDTH (s (measure-length 160)))
                                          (modulo (round (- (+ 21000 0) SOUND-BUFFER (/ (s (measure-length 160)) SQRS)))
                                                  (round (s (measure-length 160))))))
-
-; world -> image
-; draw the menu or the world
-(define (draw-world w)
-  (local [(define cur-fr (pstream-current-frame ps))]
-  (if (world-menu w)
-      (draw-menu w)
-      (add-line (place-image (text (number->string (world-tempo w)) 28 "red") 150 485
-                (place-image (text (number->string (/ (world-offset w) 44100)) 28 "red") 450 485
-                (sqr-placer  (world-boxes w))))
-                (line-posn (pstream-current-frame ps) (world-tempo w) (world-offset w))
-                0
-                (line-posn (pstream-current-frame ps) (world-tempo w) (world-offset w))
-            HEIGHT
-            "red"))))
-
-#;(check-expect (draw-world (make-world (cons (make-sq-part 5
-                                              (make-posn 10 20)
-                                              true)
-                                empty) 0 false 0 DEFAULT-TEMPO DEFAULT-OFFSET true))
-              (add-line (place-image (text "120" 28 "red") 150 485
-                        (place-image (text "0" 28 "red") 450 485
-                (place-image BUTTON-GREEN
-                           10 20
-                              (place-image BACKGROUND (/ W-WIDTH 2) (/ W-HEIGHT 2 ) MT-SCN))))
-                        (line-posn (pstream-current-frame ps) 160 0)
-                        0
-                        (line-posn (pstream-current-frame ps) 160 0)
-                        HEIGHT
-                        "red"))
 
 ; a list-of-dims is one of:
 ; - empty, or

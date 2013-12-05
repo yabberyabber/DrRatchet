@@ -3,7 +3,6 @@
 #reader(lib "htdp-intermediate-reader.ss" "lang")((modname |Final Project|) (read-case-sensitive #t) (teachpacks ((lib "image.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp"))) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ((lib "image.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp")))))
 (require rsound)
 (require 2htdp/universe)
-(require 2htdp/image)
 (require "get-file.rkt")
 
 ;;;;;
@@ -13,12 +12,17 @@
 ;;;;;
 
 (require "constants.rkt")
+
 (require "world.rkt")
-
-
-(require "drawing.rkt")
-
 (require "grid-tools.rkt")
+
+;;;;;
+;
+; Draw World
+;
+;;;;;
+
+(require "drawing.rkt") ;provides the draw function
 
 ;;;;;
 ;
@@ -26,7 +30,7 @@
 ;
 ;;;;
 
-(require "mouse-handling.rkt")
+(require "mouse-handling.rkt")  ;provides the me-h (mouse handling) function
 
 ;;;;;
 ;
@@ -86,7 +90,7 @@
 ;
 ;;;;;
 
-(require "sounding.rkt")
+(require "sounding.rkt")  ;provides the tick-handler function
 
 
 ;;;;;
@@ -96,10 +100,10 @@
 ;;;;;
 
 (big-bang (make-world (create-grid SQRS SQRS empty) 0 true 0 DEFAULT-TEMPO DEFAULT-OFFSET true)
-          [to-draw draw-world]
+          [to-draw draw]
           [on-mouse me-h]
           [on-key ke-h]
           [on-tick tick-handler])
 
-; stop the music
+; stop the music after big-bang returns
 (stop)

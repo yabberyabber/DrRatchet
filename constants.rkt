@@ -127,3 +127,7 @@
 ; -sq-part-posn
 ; -sq-part-state
 (define-struct sq-part (len posn state))
+
+
+(define (both a b)
+  b)
